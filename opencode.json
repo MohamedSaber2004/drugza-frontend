@@ -1,0 +1,71 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "ask"
+  },
+  "provider": {
+    "beatapi": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "BeatAPI",
+      "options": {
+        "baseURL": "https://api.beatapi.io/v1"
+      },
+      "models": {
+        "deepseek-v4.1-flash": {
+          "name": "DeepSeek V4.1 Flash"
+        },
+        "deepseek-v4.1-flash-free": {
+          "name": "DeepSeek V4.1 Flash (Free)"
+        },
+        "deepseek-v4-flash-0731": {
+          "name": "DeepSeek V4 Flash 0731"
+        },
+        "deepseek-v4-flash-0731-free": {
+          "name": "DeepSeek V4 Flash 0731 (Free)"
+        },
+        "deepseek-v4-pro-0813": {
+          "name": "DeepSeek V4 Pro 0813"
+        },
+        "glm-5.3": {
+          "name": "GLM 5.3"
+        },
+        "glm-5.3-free": {
+          "name": "GLM 5.3 (Free)"
+        },
+        "glm-5.3-flash": {
+          "name": "GLM 5.3 Flash"
+        },
+        "kimi-k3": {
+          "name": "Kimi K3"
+        },
+        "MiniMax-M3": {
+          "name": "minimax M3"
+        },
+        "qwen3.8-flash": {
+          "name": "Qwen 3.8 Flash"
+        },
+        "qwen3.8-max": {
+          "name": "Qwen 3.8 Max"
+        },
+        "gpt-5.6-sol": {
+          "name": "GPT 5.6 SOL"
+        },
+        "gpt-6-astra": {
+          "name": "GPT 6 Astra"
+        },
+        "claude-opus-5": {
+          "name": "Claude Opus 5"
+        },
+        "claude-sonnet-5": {
+          "name": "Claude Sonnet 5"
+        },
+        "gemini-3.8-flash": {
+          "name": "Gemini 3.8 Flash"
+        },
+        "gemini-3.8-flash-free": {
+          "name": "Gemini 3.8 Flash (Free)"
+        }
+      }
+    }
+  }
+}
