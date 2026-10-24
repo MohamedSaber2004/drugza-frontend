@@ -5,10 +5,14 @@ import App from './App.vue';
 import router from './router';
 
 import { useI18n } from './composables/useI18n';
+import { setupDependencyInjection } from './core/di';
 import { vLoading } from './directives/loading';
 import { vReveal } from './directives/reveal';
 import LoadingOverlay from './components/ui/LoadingOverlay.vue';
 import Skeleton from './components/ui/Skeleton.vue';
+
+// Initialize Core Clean Architecture Dependency Injection Container
+setupDependencyInjection();
 
 const app = createApp(App);
 const { t } = useI18n();
