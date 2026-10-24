@@ -5,92 +5,128 @@ import {
   Building2,
   MapPin,
   Clock,
-  Star,
   ShieldCheck,
   Search,
   ChevronRight,
-  ShoppingBag,
-  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
   Phone,
-  Mail,
-  ArrowRight
+  Mail
 } from 'lucide-vue-next';
 import type { Supplier, Product, Category } from '@/types';
 import { providersService, productsService, categoriesService } from '@/services';
 import ProductCard from '@/components/domain/ProductCard.vue';
 import ProductDetailModal from '@/components/domain/ProductDetailModal.vue';
 import Button from '@/components/ui/Button.vue';
-import Badge from '@/components/ui/Badge.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import { useI18n } from '@/composables/useI18n';
+import { onImageError } from '@/utils/placeholders';
+import { encryptId, decryptId } from '@/utils/id-crypto';
 
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
 
-const providerId = ref(route.params.id as string);
+const providerId = ref(decryptId(route.params.id as string));
 const provider = ref<Supplier | null>(null);
 const products = ref<Product[]>([]);
-const categories = ref<Category[]>([]);
+const availableCategories = ref<Category[]>([]);
 
 const searchQuery = ref('');
-const selectedCategory = ref<string>('all');
 const selectedProduct = ref<Product | null>(null);
 const isProductModalOpen = ref(false);
 const isLoading = ref(true);
 const currentPage = ref(1);
 const pageSize = 12;
+const showAllCategories = ref(false);
+let latestRequestId = 0;
+
+const categoryId = computed(() => (route.query.category as string) || '');
+
+const orderedCategories = computed(() => {
+  const cats = availableCategories.value;
+  if (!categoryId.value) return cats;
+  const active = cats.find(c => c.id === categoryId.value);
+  return active ? [active, ...cats.filter(c => c.id !== active.id)] : cats;
+});
+
+const CATEGORY_PREVIEW_LIMIT = 12;
+const visibleCategories = computed(() =>
+  showAllCategories.value
+    ? orderedCategories.value
+    : orderedCategories.value.slice(0, CATEGORY_PREVIEW_LIMIT)
+);
+
+const categoryLabel = computed(() => {
+  const cat = availableCategories.value.find(c => c.id === categoryId.value);
+  if (!cat) return '';
+  return locale.value === 'ar' && cat.arabicName ? cat.arabicName : cat.name;
+});
 
 onMounted(() => {
   loadData();
 });
 
 watch(
-  () => route.params.id,
-  (newId) => {
-    providerId.value = newId as string;
+  () => `${route.params.id}|${route.query.category || ''}`,
+  () => {
+    providerId.value = decryptId(route.params.id as string);
     currentPage.value = 1;
+    showAllCategories.value = false;
     loadData();
   }
 );
 
 async function loadData() {
+  const requestId = ++latestRequestId;
   isLoading.value = true;
+  const catId = categoryId.value;
   try {
-    const [prov, prods, cats] = await Promise.allSettled([
+    const [prov, cats, prods] = await Promise.allSettled([
       providersService.getProviderById(providerId.value),
-      productsService.getProductsByProvider(providerId.value),
-      categoriesService.getCategories()
+      categoriesService.getProviderAvailableCategories(providerId.value),
+      catId
+        ? productsService.getProductsByProviderAndCategory(catId, providerId.value)
+        : productsService.getProductsByProvider(providerId.value)
     ]);
+    if (requestId !== latestRequestId) return;
     if (prov.status === 'fulfilled') provider.value = prov.value;
-    if (prods.status === 'fulfilled') products.value = prods.value;
-    if (cats.status === 'fulfilled' && cats.value.length > 0) categories.value = cats.value;
+    if (cats.status === 'fulfilled') availableCategories.value = cats.value;
+    const providerName = provider.value?.businessName?.trim();
+    products.value = prods.status === 'fulfilled'
+      ? prods.value.map(p => ({
+          ...p,
+          inventoryId: provider.value?.id || p.inventoryId,
+          inventoryName: p.inventoryName || providerName || undefined
+        }))
+      : [];
   } catch (e) {
-    console.warn('Error loading provider detail:', e);
+    if (requestId === latestRequestId) console.warn('Error loading provider detail:', e);
   } finally {
-    isLoading.value = false;
-  }
-  if (route.query.category) {
-    selectedCategory.value = route.query.category as string;
+    if (requestId === latestRequestId) isLoading.value = false;
   }
 }
 
+function selectCategory(id: string) {
+  showAllCategories.value = false;
+  if (id === categoryId.value) return;
+  const query = { ...route.query };
+  if (id) query.category = id;
+  else delete query.category;
+  router.replace({ path: `/providers/${encryptId(providerId.value)}`, query });
+}
+
 const filteredProducts = computed(() => {
+  if (!searchQuery.value) return products.value;
+  const q = searchQuery.value.toLowerCase();
   return products.value.filter(p => {
-    if (selectedCategory.value !== 'all' && p.categoryId !== selectedCategory.value) {
-      return false;
-    }
-    if (searchQuery.value) {
-      const q = searchQuery.value.toLowerCase();
-      const matchName = p.name.toLowerCase().includes(q) || (p.arabicName && p.arabicName.includes(q));
-      const matchIng = p.activeIngredient?.toLowerCase().includes(q);
-      if (!matchName && !matchIng) return false;
-    }
-    return true;
+    const matchName = p.name.toLowerCase().includes(q) || (p.arabicName && p.arabicName.includes(q));
+    const matchIng = p.activeIngredient?.toLowerCase().includes(q);
+    return Boolean(matchName || matchIng);
   });
 });
 
-watch([searchQuery, selectedCategory], () => {
+watch(searchQuery, () => {
   currentPage.value = 1;
 });
 
@@ -103,6 +139,11 @@ function handleViewProduct(prod: Product) {
   selectedProduct.value = prod;
   isProductModalOpen.value = true;
 }
+
+function resetFilters() {
+  searchQuery.value = '';
+  if (categoryId.value) selectCategory('');
+}
 </script>
 
 <template>
@@ -112,7 +153,10 @@ function handleViewProduct(prod: Product) {
       <nav class="breadcrumb-row">
         <router-link to="/">{{ t('nav.home') }}</router-link>
         <ChevronRight :size="14" class="arrow-icon" />
-        <router-link to="/providers">{{ t('nav.distributors') }}</router-link>
+        <template v-if="categoryId">
+          <router-link :to="`/categories/${encryptId(categoryId)}`">{{ categoryLabel || t('nav.categories') }}</router-link>
+        </template>
+        <router-link v-else to="/providers">{{ t('nav.distributors') }}</router-link>
         <ChevronRight :size="14" class="arrow-icon" />
         <span class="current">{{ locale === 'ar' && provider?.arabicName ? provider.arabicName : (provider?.businessName || t('nav.distributors')) }}</span>
       </nav>
@@ -121,7 +165,13 @@ function handleViewProduct(prod: Product) {
       <div v-if="provider" class="provider-hero-card">
         <div class="profile-top-row">
           <div class="provider-logo-box">
-            <img v-if="provider.profileImage" :src="provider.profileImage" :alt="provider.businessName" />
+            <img
+              v-if="provider.profileImage"
+              :src="provider.profileImage"
+              :alt="provider.businessName"
+              loading="lazy"
+              @error="onImageError($event, 'provider')"
+            />
             <Building2 v-else :size="36" />
           </div>
 
@@ -157,10 +207,10 @@ function handleViewProduct(prod: Product) {
           </div>
 
           <!-- Highlight Spec Box -->
-          <div class="provider-order-spec-card">
+          <div v-if="provider.minOrder && provider.minOrder > 0" class="provider-order-spec-card">
             <span class="min-label">{{ t('providerDetail.minOrder') }}</span>
-            <strong class="min-amount">{{ provider.minOrder || 800 }} {{ t('common.currency') }}</strong>
-            <span class="min-subtext">{{ t('providerDetail.hours') }}</span>
+            <strong class="min-amount">{{ provider.minOrder }} {{ t('common.currency') }}</strong>
+            <span v-if="provider.deliverySpeed" class="min-subtext">{{ provider.deliverySpeed }}</span>
           </div>
         </div>
 
@@ -176,37 +226,56 @@ function handleViewProduct(prod: Product) {
             />
           </div>
 
-          <div class="category-pills">
-            <button
-              class="pill-btn"
-              :class="{ 'is-active': selectedCategory === 'all' }"
-              @click="selectedCategory = 'all'"
+          <div v-if="orderedCategories.length > 0" class="category-filter">
+            <div
+              class="category-pills"
+              :class="{ 'is-expanded': showAllCategories }"
             >
-              {{ t('common.all') }} ({{ products.length }})
-            </button>
+              <button
+                class="pill-btn"
+                :class="{ 'is-active': !categoryId }"
+                @click="selectCategory('')"
+              >
+                {{ t('common.all') }}
+              </button>
+              <button
+                v-for="cat in visibleCategories"
+                :key="cat.id"
+                class="pill-btn"
+                :class="{ 'is-active': categoryId === cat.id }"
+                @click="selectCategory(cat.id)"
+              >
+                {{ locale === 'ar' && cat.arabicName ? cat.arabicName : cat.name }}
+              </button>
+            </div>
             <button
-              v-for="cat in categories"
-              :key="cat.id"
-              class="pill-btn"
-              :class="{ 'is-active': selectedCategory === cat.id }"
-              @click="selectedCategory = cat.id"
+              v-if="orderedCategories.length > CATEGORY_PREVIEW_LIMIT"
+              type="button"
+              class="show-more-btn"
+              @click="showAllCategories = !showAllCategories"
             >
-              {{ locale === 'ar' && cat.arabicName ? cat.arabicName : cat.name }}
+              <span>{{ showAllCategories ? t('providerDetail.showLessCategories') : t('providerDetail.showAllCategories', { count: orderedCategories.length }) }}</span>
+              <ChevronUp v-if="showAllCategories" :size="14" />
+              <ChevronDown v-else :size="14" />
             </button>
           </div>
         </div>
       </div>
 
       <!-- Products Grid -->
-      <section class="provider-products-section">
+      <section class="provider-products-section" v-loading="isLoading">
         <div class="section-header">
           <div>
-            <h2 class="section-title">{{ t('providerDetail.productsHeading') }} ({{ filteredProducts.length }})</h2>
+            <h2 class="section-title">
+              {{ t('providerDetail.productsHeading') }}
+              <template v-if="categoryLabel"> — {{ categoryLabel }}</template>
+              ({{ filteredProducts.length }})
+            </h2>
             <p class="section-desc">{{ t('providerDetail.productsDesc') }}</p>
           </div>
         </div>
 
-        <div v-if="filteredProducts.length > 0" class="products-grid">
+        <div v-if="filteredProducts.length > 0" class="products-grid" v-reveal.children>
           <ProductCard
             v-for="prod in paginatedProducts"
             :key="prod.id"
@@ -227,7 +296,7 @@ function handleViewProduct(prod: Product) {
         <div v-else class="empty-state">
           <h3>{{ t('providerDetail.noProductsFound') }}</h3>
           <p>{{ t('catalog.noProductsDesc') }}</p>
-          <Button variant="outline" size="sm" @click="searchQuery = ''; selectedCategory = 'all'">
+          <Button variant="outline" size="sm" @click="resetFilters">
             {{ t('catalog.resetFilters') }}
           </Button>
         </div>
@@ -379,6 +448,13 @@ function handleViewProduct(prod: Product) {
   min-width: 220px;
 }
 
+@media (max-width: 640px) {
+  .provider-order-spec-card {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .min-label {
   font-size: 0.75rem;
   color: var(--color-text-secondary);
@@ -398,19 +474,20 @@ function handleViewProduct(prod: Product) {
 /* Filter bar */
 .provider-filter-bar {
   display: flex;
-  align-items: center;
-  gap: var(--space-md);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-sm);
   padding-top: var(--space-md);
   border-top: 1px solid var(--color-border-light);
-  flex-wrap: wrap;
 }
 
 .search-box {
   position: relative;
   display: flex;
   align-items: center;
-  min-width: 260px;
-  flex-grow: 1;
+  width: 100%;
+  max-width: 560px;
+  min-width: 0;
 }
 
 .search-ico {
@@ -439,11 +516,46 @@ function handleViewProduct(prod: Product) {
   padding: 0 36px 0 16px;
 }
 
+.category-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
 .category-pills {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  overflow-x: auto;
+  width: 100%;
+}
+
+.category-pills.is-expanded {
+  max-height: 264px;
+  overflow-y: auto;
+  padding-inline-end: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.show-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.show-more-btn:hover {
+  color: var(--color-deep-blue);
+  text-decoration: underline;
 }
 
 .pill-btn {
@@ -508,6 +620,12 @@ function handleViewProduct(prod: Product) {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .products-grid {
+    grid-template-columns: 1fr;
   }
 }
 

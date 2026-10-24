@@ -7,6 +7,7 @@ import { providersService } from '@/services';
 import SupplierCard from '@/components/domain/SupplierCard.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import { useI18n } from '@/composables/useI18n';
+import { encryptId } from '@/utils/id-crypto';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -50,7 +51,7 @@ const paginatedSuppliers = computed(() => {
 });
 
 function handleSelectSupplier(sup: Supplier) {
-  router.push(`/providers/${sup.id}`);
+  router.push(`/providers/${encryptId(sup.id)}`);
 }
 </script>
 
@@ -95,7 +96,7 @@ function handleSelectSupplier(sup: Supplier) {
       </div>
 
       <!-- Suppliers Grid (Paginated, 12 per page) -->
-      <div v-if="filteredSuppliers.length > 0" class="suppliers-grid">
+      <div v-if="filteredSuppliers.length > 0" class="suppliers-grid" v-loading="isLoading" v-reveal.children>
         <SupplierCard
           v-for="sup in paginatedSuppliers"
           :key="sup.id"

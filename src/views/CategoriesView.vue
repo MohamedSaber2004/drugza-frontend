@@ -7,13 +7,16 @@ import { categoriesService } from '@/services';
 import CategoryCard from '@/components/domain/CategoryCard.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import { useI18n } from '@/composables/useI18n';
+import { encryptId } from '@/utils/id-crypto';
 
 const router = useRouter();
 const { t } = useI18n();
 const categories = ref<Category[]>([]);
 const currentPage = ref(1);
+const isLoading = ref(true);
 
 onMounted(async () => {
+  isLoading.value = true;
   try {
     const list = await categoriesService.getCategories();
     if (list && list.length > 0) {
@@ -21,6 +24,8 @@ onMounted(async () => {
     }
   } catch (e) {
     console.warn('Error loading categories:', e);
+  } finally {
+    isLoading.value = false;
   }
 });
 
@@ -31,7 +36,7 @@ const paginatedCategories = computed(() => {
 });
 
 function handleSelectCategory(cat: Category) {
-  router.push(`/categories/${cat.id}`);
+  router.push(`/categories/${encryptId(cat.id)}`);
 }
 </script>
 
@@ -57,7 +62,7 @@ function handleSelectCategory(cat: Category) {
       </div>
 
       <!-- Categories Grid (Paginated, 12 per page) -->
-      <div v-if="categories.length > 0" class="categories-grid">
+      <div v-if="categories.length > 0" class="categories-grid" v-loading="isLoading" v-reveal.children>
         <CategoryCard
           v-for="cat in paginatedCategories"
           :key="cat.id"
@@ -156,6 +161,12 @@ function handleSelectCategory(cat: Category) {
 
 @media (max-width: 1200px) {
   .categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .categories-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
@@ -164,6 +175,12 @@ function handleSelectCategory(cat: Category) {
   .categories-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .categories-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

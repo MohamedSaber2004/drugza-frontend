@@ -1,7 +1,6 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import {
-  Phone,
-  MessageSquare,
   Mail,
   MapPin,
   Clock,
@@ -9,8 +8,33 @@ import {
 } from 'lucide-vue-next';
 import DrugzaLogo from '@/components/ui/DrugzaLogo.vue';
 import { useI18n } from '@/composables/useI18n';
+import { categoriesService } from '@/services/categories.service';
+import { encryptId } from '@/utils/id-crypto';
+import type { Category } from '@/types';
 
 const { t, locale } = useI18n();
+
+const categories = ref<Category[]>([]);
+
+onMounted(async () => {
+  try {
+    const list = await categoriesService.getCategories();
+    const preferred = ['tablet', 'capsule', 'syrup', 'cream', 'drops', 'ointment', 'suspension', 'suppository', 'sachet'];
+    const picked: Category[] = [];
+    for (const name of preferred) {
+      const hit = list.find(c => c.name.trim().toLowerCase() === name);
+      if (hit) picked.push(hit);
+      if (picked.length === 6) break;
+    }
+    for (const c of list) {
+      if (picked.length === 6) break;
+      if (!picked.includes(c)) picked.push(c);
+    }
+    categories.value = picked;
+  } catch {
+    categories.value = [];
+  }
+});
 </script>
 
 <template>
@@ -49,12 +73,14 @@ const { t, locale } = useI18n();
         <div class="footer-col">
           <h4 class="col-heading">{{ t('footer.medicalCategories') }}</h4>
           <ul class="footer-links-list">
-            <li><router-link to="/categories/cat-1">{{ locale === 'ar' ? 'مسكنات ومضادات الالتهاب' : 'Pain Relief & Analgesics' }}</router-link></li>
-            <li><router-link to="/categories/cat-2">{{ locale === 'ar' ? 'مضادات حيوية ومكافحة العدوى' : 'Antibiotics & Anti-Infectives' }}</router-link></li>
-            <li><router-link to="/categories/cat-3">{{ locale === 'ar' ? 'فيتامينات ومكملات غذائية' : 'Vitamins & Nutrition' }}</router-link></li>
-            <li><router-link to="/categories/cat-4">{{ locale === 'ar' ? 'أدوية ومستلزمات السكري' : 'Diabetes Care & Monitoring' }}</router-link></li>
-            <li><router-link to="/categories/cat-5">{{ locale === 'ar' ? 'العناية بالجلد والجلدية' : 'Dermatology & Skin Care' }}</router-link></li>
-            <li><router-link to="/categories/cat-6">{{ locale === 'ar' ? 'أجهزة ومستهلكات طبية' : 'Medical Devices & Consumables' }}</router-link></li>
+            <li v-for="cat in categories" :key="cat.id">
+              <router-link :to="'/categories/' + encryptId(cat.id)">
+                {{ locale === 'ar' ? (cat.arabicName || cat.name) : cat.name }}
+              </router-link>
+            </li>
+            <li v-if="categories.length === 0">
+              <router-link to="/categories">{{ t('nav.categories') }}</router-link>
+            </li>
           </ul>
         </div>
 
@@ -64,28 +90,6 @@ const { t, locale } = useI18n();
           <p class="contact-sub">{{ locale === 'ar' ? 'تواصل مباشرة مع مكتب العمليات الصيدلانية الموحد:' : 'Connect with our dedicated pharmaceutical operations desk:' }}</p>
 
           <div class="contact-cards-list">
-            <!-- Hotline 19890 -->
-            <a href="tel:19890" class="contact-action-card hotline">
-              <div class="icon-circle gold">
-                <Phone :size="18" />
-              </div>
-              <div class="contact-text">
-                <span class="card-label">{{ t('footer.hotlineLabel') }}</span>
-                <strong class="card-val">{{ t('footer.hotlineNumber') }}</strong>
-              </div>
-            </a>
-
-            <!-- WhatsApp Direct -->
-            <a href="https://wa.me/201023456789" target="_blank" rel="noopener" class="contact-action-card whatsapp">
-              <div class="icon-circle green">
-                <MessageSquare :size="18" />
-              </div>
-              <div class="contact-text">
-                <span class="card-label">{{ t('footer.whatsappLabel') }}</span>
-                <strong class="card-val" dir="ltr">{{ t('footer.whatsappNumber') }}</strong>
-              </div>
-            </a>
-
             <!-- Official Email -->
             <a href="mailto:support@drugza.com" class="contact-action-card email">
               <div class="icon-circle blue">
@@ -121,13 +125,9 @@ const { t, locale } = useI18n();
         </p>
 
         <div class="legal-links">
-          <a href="#terms">{{ t('footer.terms') }}</a>
+          <router-link to="/terms">{{ t('footer.terms') }}</router-link>
           <span class="sep">&bull;</span>
-          <a href="#privacy">{{ t('footer.privacy') }}</a>
-          <span class="sep">&bull;</span>
-          <a href="#refund">{{ t('footer.returnPolicy') }}</a>
-          <span class="sep">&bull;</span>
-          <a href="#gdp">{{ t('footer.standards') }}</a>
+          <router-link to="/privacy">{{ t('footer.privacy') }}</router-link>
         </div>
       </div>
     </div>
@@ -342,5 +342,13 @@ const { t, locale } = useI18n();
 
 .sep {
   color: var(--color-text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .bottom-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
 }
 </style>

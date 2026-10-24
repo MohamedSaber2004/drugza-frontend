@@ -2,7 +2,6 @@ export default {
   // Top utility bar
   topBar: {
     medicalNotice: 'توزيع طبي مرخص: خدمات لوجستية دوائية مبردة تخضع لمعايير هيئة الدواء المصرية للصيدليات المعتمدة.',
-    hotline: 'الخط الساخن: 19890',
     deliveryDays: 'توصيل مبرد طوال أيام الأسبوع',
     switchLanguage: 'English'
   },
@@ -77,7 +76,8 @@ export default {
     title: 'تصفح حسب التصنيف الدوائي',
     subtitle: 'اضغط على أي تصنيف لعرض جميع الموزعين المعتمدين الذين يوفرون تلك الأدوية.',
     viewAllCategories: 'تصفح الكتالوج بالكامل',
-    itemsCount: '{count} صنف متوفر'
+    itemsCount: '{count} صنف متوفر',
+    browseCategory: 'تصفح التصنيف'
   },
 
   // Products
@@ -122,6 +122,9 @@ export default {
     searchPlaceholder: 'الاسم التجاري أو المادة الفعالة...',
     categoriesTitle: 'التصنيفات العلاجية',
     allCategories: 'كافة التصنيفات',
+    providersTitle: 'الموردون والمستودعات',
+    allProviders: 'كافة المستودعات المعتمدة',
+    activeFilters: 'الفلاتر النشطة:',
     availabilityTitle: 'حالة التوفر بالمخزون',
     inStockOnly: 'المتوفر في المخزن فقط',
     flashSalesOnly: 'عروض التخفيضات الفورية فقط',
@@ -167,7 +170,9 @@ export default {
     hours: 'مواعيد التوريد: شحن مبرد ومراقب 24/7',
     productsHeading: 'المخزون الدوائي المتاح من هذا الموزع',
     productsDesc: 'اطلب احتياجات صيدليتك مباشرة من هذا المستودع لتحقيق الحد الأدنى وتوفير رسوم الشحن.',
-    noProductsFound: 'لا توجد أدوية مدرجة حالياً تحت هذا الموزع.'
+    noProductsFound: 'لا توجد أدوية مدرجة حالياً تحت هذا الموزع.',
+    showAllCategories: 'عرض كل الفئات ({count})',
+    showLessCategories: 'عرض أقل'
   },
 
   // Favorites Page
@@ -184,7 +189,7 @@ export default {
   ordersPage: {
     eyebrow: 'سجل المشتريات والتوريدات',
     heading: 'سجل طلبيات الجملة',
-    subtitle: 'متابعة لحظية لحالات الشحن وتقارير درجات حرارة التبريد والفواتير الضريبية الرسمية.',
+    subtitle: 'استعراض وإدارة سجل طلبيات الجملة وتفاصيل الأصناف والفواتير الضريبية الرسمية.',
     emptyTitle: 'لم يتم تسجيل أي طلبيات بعد',
     emptyDesc: 'ستظهر هنا كافة طلبيات الجملة المسجلة وتحديثات الشحن المباشرة فور إتمامها.',
     browseProducts: 'بدء التوريد الآن',
@@ -192,7 +197,13 @@ export default {
     date: 'التاريخ: {date}',
     total: 'إجمالي الطلبية: {amount} ج.م',
     status: 'الحالة: {status}',
-    viewDetails: 'عرض تفاصيل الطلبية والفاتورة'
+    viewDetails: 'عرض تفاصيل الطلبية والفاتورة',
+    orderStatus: 'حالة الطلبية',
+    itemStatus: 'حالة الصنف',
+    itemsTitle: 'أصناف وتفاصيل الطلبية',
+    itemsCountLabel: '{count} أصناف',
+    viewItems: 'عرض الأصناف',
+    hideItems: 'إخفاء الأصناف'
   },
 
   // Cart Drawer
@@ -204,15 +215,12 @@ export default {
     startShopping: 'ابدأ التسوق',
     browseMedicines: 'تصفح الأدوية',
     supplierLabel: 'مستودع الموزع',
-    minOrderLabel: 'الحد الأدنى: {amount} ج.م',
-    minOrderAlert: 'أضف أصناف بقيمة {amount} ج.م إضافية للوصول للحد الأدنى لهذا المستودع.',
     subtotal: 'إجمالي الطلبية',
     coldChainFee: 'رسوم الشحن اللوجستي المبرد GDP',
     free: 'مجاني',
     total: 'الإجمالي المقدر',
     checkout: 'متابعة إتمام الطلبية',
-    clear: 'تفريغ العربة',
-    minOrderFootnote: '* يرجى استيفاء الحد الأدنى لكل مستودع قبل متابعة إتمام الطلبية.'
+    clear: 'تفريغ العربة'
   },
 
   // Search Modal
@@ -234,10 +242,12 @@ export default {
     strength: 'التركيز',
     packSpecification: 'مواصفات العبوة',
     brandManufacturer: 'الشركة المصنعة / العلامة',
+    brand: 'العلامة التجارية',
+    manufacturer: 'الشركة المصنعة',
+    route: 'طريقة الاستخدام',
     wholesalePricesStartingAt: 'أسعار الجملة تبدأ من:',
     verifiedAuthenticBatch: 'تشغيلة أصلية موثقة برقم التشغيلة',
     suppliersTab: 'الموزعون والمستودعات',
-    overviewTab: 'النشرة والبيانات العلاجية',
     alternativesTab: 'البدائل والمثائل الصيدلانية',
     supplierCol: 'مستودع التوزيع',
     stockCol: 'المخزون المتوفر',
@@ -246,7 +256,6 @@ export default {
     actionCol: 'إجراء',
     addToDispatch: 'أضف للطلبية',
     units: 'علبة / عبوة',
-    indicationsTitle: 'دواعي الاستعمال العلاجية',
     storageTitle: 'بروتوكول التخزين وسلسلة التبريد',
     edaTitle: 'الاشتراطات التنظيمية والرقابية'
   },
@@ -269,31 +278,14 @@ export default {
     wideSelection: 'أكثر من 4,000+ دواء ومستحضر معتمد',
     sameDayColdChain: 'توصيل في نفس اليوم بسلسلة تبريد مجهزة',
 
-    registerTitle: 'تسجيل حساب صيدلية جديدة',
-    registerSubtitle: 'أدخل بيانات الصيدلية والتراخيص التجارية للبدء الفوري',
-    growBusiness: 'نمِّ أعمال صيدليتك مع دراجزا',
-    growBusinessSub: 'انضم إلى أكبر منصة لتجارة الدواء بالجملة في مصر. استمتع بأسعار الموزعين الحصرية، وخصومات الكميات، وسلسلة توريد مبردة ومعتمدة.',
-    factoryPricing: 'أسعار توزيع ومصانع منافسة',
-    verifiedDistributors: 'موزعون وشركات معتمدة من هيئة الدواء',
-    automatedInvoicing: 'فواتير إلكترونية ومحاسبة ضريبية آلية',
-    pharmacyName: 'اسم النشاط التجاري / الصيدلية *',
-    doctorName: 'الاسم بالكامل / المسؤول *',
-    email: 'البريد الإلكتروني الرسمي *',
-    phone: 'رقم الهاتف / واتساب *',
-    role: 'نوع الحساب / الدور *',
-    selectRole: 'اختر نوع الحساب / الدور',
-    minOrder: 'الحد الأدنى للطلب (ج.م)',
-    salary: 'الراتب / الدخل',
-    country: 'الدولة *',
-    city: 'المدينة *',
-    area: 'المنطقة / الحي *',
-    addressLines: 'العنوان التفصيلي (رقم المبنى، الشارع، الطابق) *',
-    confirmPassword: 'تأكيد كلمة المرور *',
-    attachLicense: 'الصورة الشخصية أو الشعار التجاري (Profile Image)',
-    clickToUpload: 'اضغط لرفع صورة الحساب أو الشعار (JPG أو PNG أو WebP)',
-    uploadHint: 'الحد الأقصى 5 ميجابايت',
-    termsAccept: 'أوافق على شروط الخدمة الدوائية وسياسة الاستخدام في دراجزا.',
-    submitRegister: 'إتمام تسجيل الحساب',
+    registerTitle: 'إنشاء حساب',
+    registerSubtitle: 'انضم إلى Drugza وابدأ التسوق لمنتجات الصيدليات الموثوقة',
+    pharmacyName: 'اسم الصيدلية',
+    doctorName: 'الاسم الكامل',
+    email: 'البريد الإلكتروني',
+    phone: 'رقم الهاتف',
+    confirmPassword: 'تأكيد كلمة المرور',
+    submitRegister: 'إنشاء حساب',
     haveAccountPrompt: 'هل لديك حساب مسجل بالفعل في دراجزا؟',
     signInLink: 'تسجيل الدخول',
 
@@ -375,14 +367,33 @@ export default {
     addBtn: 'إضافة فرع استلام جديد',
     primaryBadge: 'الفرع الرئيسي',
     setAsDefault: 'تعيين كعنوان رئيسي',
+    edit: 'تعديل',
     delete: 'حذف',
     addNewTitle: 'إضافة عنوان استلام دوائي جديد',
+    editTitle: 'تعديل بيانات عنوان الاستلام',
     branchTitle: 'اسم الفرع أو المستودع',
     recipientName: 'اسم الصيدلي المستلم',
-    streetAddress: 'الشارع ورقم المبنى والدور',
+    streetAddress: 'اسم الشارع',
     instructions: 'ملاحظات الاستلام الدوائي (بوابة التوريد، التبريد، إلخ)',
     saveBtn: 'حفظ العنوان',
-    cancelBtn: 'إلغاء'
+    cancelBtn: 'إلغاء',
+    deleteConfirm: 'هل أنت متأكد من حذف هذا العنوان؟',
+    deleteWarning: 'سيتم حذف عنوان هذا الفرع نهائياً من حساب الصيدلية.',
+    confirmDeleteBtn: 'نعم، حذف العنوان',
+    loading: 'جاري تحميل العناوين...',
+    saving: 'جاري الحفظ...',
+    deleting: 'جاري الحذف...',
+    emptyTitle: 'لا توجد فروع أو عناوين مسجلة حالياً',
+    emptyDesc: 'أضف عنوان صيدليتك ومواقع الاستلام لتمكين الشحن المباشر والمحدد بنظام التبريد الدوائي.',
+    viewOnMap: 'عرض على الخريطة',
+    detectLocation: 'تحديد موقعي الحالي (GPS)',
+    detectingLocation: 'جاري تحديد الإحداثيات...',
+    locationDetected: 'تم تحديد الإحداثيات بنجاح',
+    locationPermissionDenied: 'يرجى السماح بالوصول إلى الموقع الجغرافي في المتصفح',
+    locationNotSupported: 'المتصفح لا يدعم تحديد الموقع الجغرافي',
+    previewOnMap: 'معاينة الموقع في Google Maps',
+    clearLocation: 'إزالة الإحداثيات',
+    coordinatesLabel: 'الإحداثيات الجغرافية (GPS)'
   },
 
   // AI Assistant (CodeCraft)
@@ -420,13 +431,9 @@ export default {
     marketplaceNav: 'أقسام المنصة الرئيسية',
     medicalCategories: 'التصنيفات الدوائية',
     directContact: 'التواصل والدعم الفني',
-    hotlineLabel: 'الخط الساخن للصيدليات 24/7',
-    hotlineNumber: '19890',
-    whatsappLabel: 'مكتب طلبيات الواتساب الرسمي',
-    whatsappNumber: '+20 102 345 6789',
     emailLabel: 'البريد الإلكتروني والمناقصات',
     emailAddress: 'support@drugza.com',
-    location: 'القرية الذكية، مبنى B12، الجيزة، القاهرة، مصر',
+    location: 'القاهرة، جمهورية مصر العربية',
     fleet: 'أسطول نقل دوائي مبرد يعمل على مدار الساعة',
     copyright: '© 2026 جميع الحقوق محفوظة لشركة دراجزا لتجارة وتوزيع الأدوية.',
     terms: 'الشروط والأحكام',

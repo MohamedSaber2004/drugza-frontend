@@ -28,6 +28,8 @@ import {
 } from '@/services/home.service';
 import Button from '@/components/ui/Button.vue';
 import Badge from '@/components/ui/Badge.vue';
+import Skeleton from '@/components/ui/Skeleton.vue';
+import SkeletonGrid from '@/components/ui/SkeletonGrid.vue';
 import SectionPlaceholder from '@/components/ui/SectionPlaceholder.vue';
 import ProductCard from '@/components/domain/ProductCard.vue';
 import CategoryCard from '@/components/domain/CategoryCard.vue';
@@ -36,16 +38,13 @@ import ProductDetailModal from '@/components/domain/ProductDetailModal.vue';
 import { useI18n } from '@/composables/useI18n';
 import { useAuth } from '@/composables/useAuth';
 import { onImageError } from '@/utils/placeholders';
+import { encryptId } from '@/utils/id-crypto';
 
 const router = useRouter();
 const { t, locale, isRtl } = useI18n();
 const { user } = useAuth();
 
-const emit = defineEmits<{
-  (e: 'open-search'): void;
-}>();
-
-// Unified Home State loaded strictly from /api/Home/GetHomeProduct
+// Unified Home State loaded from the public home endpoints
 const isLoading = ref(true);
 const categories = ref<Category[] | null>(null);
 const suppliers = ref<Supplier[] | null>(null);
@@ -55,7 +54,11 @@ const banners = ref<HomeBanner[] | null>(null);
 const brands = ref<HomeBrand[] | null>(null);
 const specialOffersOne = ref<HomeSpecialOffer[] | null>(null);
 const specialOffersTwo = ref<HomeSpecialOffer[] | null>(null);
-const businessName = computed(() => user.value?.fullName || user.value?.businessName || null);
+const customBusinessName = ref<string | null>(null);
+const businessName = computed(() => customBusinessName.value || user.value?.fullName || user.value?.businessName || null);
+
+const featuredCategories = computed(() => categories.value?.slice(0, 12) ?? null);
+const featuredSuppliers = computed(() => suppliers.value?.slice(0, 8) ?? null);
 
 const currentBannerIdx = ref(0);
 const isHoveringBanner = ref(false);
@@ -157,11 +160,11 @@ const promoHeadline = computed(() => {
   return '';
 });
 
-// Single unified onMounted loading all home sections from GET /api/Home/GetHomeProduct
+// Single unified onMounted loading all public home sections
 onMounted(async () => {
   isLoading.value = true;
   try {
-    const data = await homeService.getHomeProduct();
+    const data = await homeService.getHome();
     banners.value = data.banners;
     categories.value = data.categories;
     products.value = data.products;
@@ -170,9 +173,9 @@ onMounted(async () => {
     specialOffersOne.value = data.specialOffersone;
     specialOffersTwo.value = data.specialOfferstwo;
     flashSales.value = data.flashSales;
-    businessName.value = data.businessName || null;
+    customBusinessName.value = data.businessName || null;
   } catch (err) {
-    console.warn('Error loading home data via getHomeProduct:', err);
+    console.warn('Error loading home data:', err);
     banners.value = null;
     categories.value = null;
     products.value = null;
@@ -191,14 +194,26 @@ function handleViewProduct(prod: Product) {
   isProductModalOpen.value = true;
 }
 
+// Hero search: typing a keyword navigates to the All Products (catalog) filter
+const heroSearchQuery = ref('');
+
+function handleHeroSearch() {
+  const q = heroSearchQuery.value.trim();
+  if (!q) {
+    router.push('/catalog');
+    return;
+  }
+  router.push({ path: '/catalog', query: { search: q } });
+}
+
 // When clicking a category -> navigate to dedicated Category Providers page
 function handleSelectCategory(cat: Category) {
-  router.push(`/categories/${cat.id}`);
+  router.push(`/categories/${encryptId(cat.id)}`);
 }
 
 // When clicking a supplier -> navigate to dedicated Provider Products page
 function handleSelectSupplier(sup: Supplier) {
-  router.push(`/providers/${sup.id}`);
+  router.push(`/providers/${encryptId(sup.id)}`);
 }
 
 function handleViewAlternatives(ingredientId: string) {
@@ -213,7 +228,7 @@ function handleViewAlternatives(ingredientId: string) {
          ========================================================================= -->
     <section class="hero-section">
       <div class="drugza-container hero-container">
-        <div class="hero-content">
+        <div class="hero-content" v-reveal>
           <!-- Trust Pill / Personalized Welcome -->
           <div class="hero-badge">
             <span class="pulse-icon"></span>
@@ -231,16 +246,20 @@ function handleViewAlternatives(ingredientId: string) {
           </p>
 
           <!-- Interactive Hero Search Bar -->
-          <div class="hero-search-box" @click="emit('open-search')">
-            <div class="search-input-mock">
-              <Search :size="20" class="search-ico" />
-              <span class="search-text">{{ t('hero.searchPlaceholder') }}</span>
-            </div>
-            <Button variant="cta" size="md" class="hero-search-btn">
+          <form class="hero-search-box" role="search" @submit.prevent="handleHeroSearch">
+            <Search :size="20" class="search-ico" />
+            <input
+              v-model="heroSearchQuery"
+              type="text"
+              class="hero-search-input"
+              :placeholder="t('hero.searchPlaceholder')"
+              :aria-label="t('hero.searchPlaceholder')"
+            />
+            <Button variant="cta" size="md" type="submit" class="hero-search-btn">
               <span>{{ t('hero.searchBtn') }}</span>
               <ArrowRight :size="16" class="arrow-icon" />
             </Button>
-          </div>
+          </form>
 
           <!-- CTAs -->
           <div class="hero-actions">
@@ -256,7 +275,7 @@ function handleViewAlternatives(ingredientId: string) {
         </div>
 
         <!-- Hero Visual Showcase (Fixed Drugza Logo / Brand Image) -->
-        <div class="hero-visual">
+        <div class="hero-visual" v-reveal>
           <div class="visual-card">
             <img
               src="/images/hero-banner.jpg"
@@ -290,9 +309,14 @@ function handleViewAlternatives(ingredientId: string) {
          ========================================================================= -->
     <section class="banners-carousel-section">
       <div class="drugza-container banner-container-center">
+        <!-- Loading skeleton for the promotional banner -->
+        <div v-if="isLoading" class="banner-skeleton-wrap">
+          <Skeleton class="banner-skeleton" aspect-ratio="16 / 9" radius="24px" />
+        </div>
+
         <!-- Banner Carousel if banners available -->
         <div
-          v-if="banners && banners.length > 0"
+          v-else-if="banners && banners.length > 0"
           class="banner-slider-card"
           @mouseenter="isHoveringBanner = true"
           @mouseleave="isHoveringBanner = false"
@@ -375,8 +399,14 @@ function handleViewAlternatives(ingredientId: string) {
          ========================================================================= -->
     <section class="drugza-section flash-sale-section">
       <div class="drugza-container">
+        <!-- Loading state -->
+        <template v-if="isLoading">
+          <Skeleton height="104px" radius="20px" class="section-skeleton-head" />
+          <SkeletonGrid variant="product" :count="4" />
+        </template>
+
         <!-- Render Flash Products when available -->
-        <template v-if="flashSales && flashSales.length > 0">
+        <template v-else-if="flashSales && flashSales.length > 0">
           <div class="flash-header-card">
             <div class="flash-title-col">
               <div class="flash-pill">
@@ -406,11 +436,17 @@ function handleViewAlternatives(ingredientId: string) {
                   <span class="unit">{{ t('flashSale.secs') }}</span>
                 </div>
               </div>
+
+              <router-link to="/flash-sales" class="home-flash-view-all">
+                <span>{{ t('flashSale.viewAllDeals') }}</span>
+                <ChevronLeft v-if="isRtl" :size="16" />
+                <ChevronRight v-else :size="16" />
+              </router-link>
             </div>
           </div>
 
           <!-- Flash Products Grid -->
-          <div class="flash-products-grid">
+          <div class="flash-products-grid" v-reveal.children>
             <ProductCard
               v-for="prod in flashSales"
               :key="prod.id"
@@ -452,9 +488,11 @@ function handleViewAlternatives(ingredientId: string) {
           </router-link>
         </div>
 
-        <div v-if="suppliers && suppliers.length > 0" class="suppliers-grid">
+        <SkeletonGrid v-if="isLoading" variant="supplier" :count="5" />
+
+        <div v-else-if="featuredSuppliers && featuredSuppliers.length > 0" class="suppliers-grid" v-reveal.children>
           <SupplierCard
-            v-for="sup in suppliers"
+            v-for="sup in featuredSuppliers"
             :key="sup.id"
             :supplier="sup"
             @select="handleSelectSupplier"
@@ -539,9 +577,11 @@ function handleViewAlternatives(ingredientId: string) {
           </router-link>
         </div>
 
-        <div v-if="categories && categories.length > 0" class="categories-grid">
+        <SkeletonGrid v-if="isLoading" variant="category" :count="6" />
+
+        <div v-else-if="featuredCategories && featuredCategories.length > 0" class="categories-grid" v-reveal.children>
           <CategoryCard
-            v-for="cat in categories"
+            v-for="cat in featuredCategories"
             :key="cat.id"
             :category="cat"
             @select="handleSelectCategory"
@@ -577,7 +617,9 @@ function handleViewAlternatives(ingredientId: string) {
           </router-link>
         </div>
 
-        <div v-if="products && products.length > 0" class="products-grid">
+        <SkeletonGrid v-if="isLoading" variant="product" :count="4" />
+
+        <div v-else-if="products && products.length > 0" class="products-grid" v-reveal.children>
           <ProductCard
             v-for="prod in products"
             :key="prod.id"
@@ -604,8 +646,10 @@ function handleViewAlternatives(ingredientId: string) {
          ========================================================================= -->
     <section class="drugza-section special-offers-two-section">
       <div class="drugza-container">
+        <Skeleton v-if="isLoading" height="220px" radius="24px" />
+
         <div
-          v-if="specialOffersTwo && specialOffersTwo.length > 0"
+          v-else-if="specialOffersTwo && specialOffersTwo.length > 0"
           class="promo-card promo-card-secondary"
           @click="handleBannerClick(specialOffersTwo[0])"
         >
@@ -676,7 +720,9 @@ function handleViewAlternatives(ingredientId: string) {
           </router-link>
         </div>
 
-        <div v-if="brands && brands.length > 0" class="brands-grid">
+        <SkeletonGrid v-if="isLoading" variant="brand" :count="6" />
+
+        <div v-else-if="brands && brands.length > 0" class="brands-grid" v-reveal.children>
           <div
             v-for="brand in brands"
             :key="brand.id"
@@ -741,7 +787,10 @@ function handleViewAlternatives(ingredientId: string) {
    1. HERO SECTION
    ========================================================================= */
 .hero-section {
-  background: linear-gradient(180deg, #F0F4FA 0%, #F7F8FC 100%);
+  background:
+    radial-gradient(900px 420px at 88% 0%, rgba(243, 206, 121, 0.16) 0%, transparent 62%),
+    radial-gradient(700px 380px at 0% 100%, rgba(20, 184, 166, 0.08) 0%, transparent 60%),
+    linear-gradient(180deg, #F0F4FA 0%, #F7F8FC 100%);
   padding: var(--space-2xl) 0 var(--space-3xl);
   border-bottom: 1px solid var(--color-border);
   position: relative;
@@ -833,15 +882,15 @@ function handleViewAlternatives(ingredientId: string) {
 /* Hero Search Box */
 .hero-search-box {
   width: 100%;
-  max-width: 540px;
+  max-width: 560px;
   background: #FFFFFF;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-pill);
-  padding: 6px 8px 6px 16px;
+  padding: 6px;
+  padding-inline-start: 18px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
+  gap: var(--space-xs);
   box-shadow: var(--shadow-sm);
   transition: all var(--dur-fast) var(--ease-smooth);
 }
@@ -851,13 +900,9 @@ function handleViewAlternatives(ingredientId: string) {
   box-shadow: var(--shadow-md);
 }
 
-.search-input-mock {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
-  overflow: hidden;
+.hero-search-box:focus-within {
+  border-color: var(--color-primary-blue);
+  box-shadow: 0 0 0 4px rgba(25, 118, 173, 0.12), var(--shadow-md);
 }
 
 .search-ico {
@@ -865,23 +910,34 @@ function handleViewAlternatives(ingredientId: string) {
   flex-shrink: 0;
 }
 
-.search-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.hero-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+}
+
+.hero-search-input::placeholder {
+  color: var(--color-text-tertiary);
 }
 
 .hero-search-btn {
   border-radius: var(--radius-pill);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 @media (max-width: 480px) {
   .hero-search-box {
-    padding: 6px 8px;
+    padding-inline-start: 14px;
   }
-  .hero-search-btn span {
-    display: none;
+
+  .hero-search-btn {
+    padding-inline: 14px;
   }
 }
 
@@ -934,6 +990,23 @@ function handleViewAlternatives(ingredientId: string) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.banner-skeleton-wrap {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.banner-skeleton {
+  width: 100%;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+}
+
+.section-skeleton-head {
+  width: 100%;
+  margin-bottom: var(--space-xl);
 }
 
 .banner-slider-card {
@@ -1417,6 +1490,26 @@ function handleViewAlternatives(ingredientId: string) {
   color: #EA580C;
 }
 
+.home-flash-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #C2410C;
+  color: #FFFFFF;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.home-flash-view-all:hover {
+  background: #9A3412;
+  transform: translateY(-1px);
+}
+
 .flash-products-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1434,6 +1527,12 @@ function handleViewAlternatives(ingredientId: string) {
   .flash-products-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .flash-products-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1573,6 +1672,12 @@ function handleViewAlternatives(ingredientId: string) {
   }
 }
 
+@media (max-width: 360px) {
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* =========================================================================
    6. PRODUCTS SECTION
    ========================================================================= */
@@ -1605,6 +1710,12 @@ function handleViewAlternatives(ingredientId: string) {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .products-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1681,9 +1792,15 @@ function handleViewAlternatives(ingredientId: string) {
 
 .brands-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-md);
   margin-top: var(--space-md);
+}
+
+@media (max-width: 480px) {
+  .brands-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .brand-card {

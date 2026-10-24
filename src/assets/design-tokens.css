@@ -1,0 +1,383 @@
+/* ==========================================================================
+   DRUGZA DESIGN SYSTEM TOKENS
+   Strict brand tokens adhering to the Drugza visual identity guidelines
+   ========================================================================== */
+
+:root {
+  /* Core Brand Colors */
+  --color-primary-blue: #1976AD;
+  --color-primary-blue-hover: #135e8b;
+  --color-primary-blue-active: #0f4b6f;
+  --color-primary-blue-light: #EBF3F9;
+  --color-primary-blue-subtle: #F0F6FA;
+  --color-primary-blue-bg: #EBF3F9;
+  --color-primary-teal: #14B8A6;
+  --gradient-brand: linear-gradient(135deg, #12496B 0%, #1976AD 58%, #14B8A6 100%);
+
+  --color-accent-yellow: #F3CE79;
+  --color-accent-yellow-hover: #e8c067;
+  --color-accent-yellow-active: #dab055;
+  --color-accent-yellow-light: #FDF9EE;
+
+  /* Surfaces & Backgrounds */
+  --color-off-white: #F7F8FC;
+  --color-pale-blue: #F0F4FA;
+  --color-white: #FFFFFF;
+  --color-surface-hover: #F2F5FA;
+  --color-surface-card: #FFFFFF;
+
+  /* Typography Colors */
+  --color-deep-blue: #12496B;
+  --color-text-primary: #263746;
+  --color-text-secondary: #667085;
+  --color-text-tertiary: #98A2B3;
+  --color-text-inverse: #FFFFFF;
+
+  /* Borders & Dividers */
+  --color-border: #E5EAF0;
+  --color-border-light: #EEF2F6;
+  --color-border-focus: #1976AD;
+  --color-border-hover: #CBD5E1;
+
+  /* Status / Feedback */
+  --color-success: #16A085;
+  --color-success-bg: #E8F8F5;
+  --color-error: #DC5B61;
+  --color-danger: #DC5B61;
+  --color-danger-bg: #FDF2F2;
+  --color-error-bg: #FDF2F2;
+  --color-warning: #E67E22;
+  --color-warning-bg: #FEF6EC;
+  --color-info: #1976AD;
+  --color-info-bg: #EBF3F9;
+
+  /* Typography Scale */
+  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-5xl: 3rem;      /* 48px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  /* 4px Spacing Scale */
+  --space-3xs: 4px;
+  --space-2xs: 8px;
+  --space-xs: 12px;
+  --space-sm: 16px;
+  --space-md: 20px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 80px;
+
+  /* Consistent Radii (16px card standard) */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(18, 73, 107, 0.04);
+  --shadow-sm: 0 2px 8px rgba(18, 73, 107, 0.06);
+  --shadow-md: 0 6px 20px rgba(18, 73, 107, 0.09);
+  --shadow-lg: 0 12px 32px rgba(18, 73, 107, 0.11);
+  --shadow-xl: 0 20px 48px rgba(18, 73, 107, 0.15);
+  --shadow-brand: 0 8px 24px rgba(25, 118, 173, 0.2);
+  --focus-ring: 0 0 0 4px rgba(25, 118, 173, 0.14);
+
+  /* Transitions */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 350ms;
+  --dur-reveal: 650ms;
+  --transition-fast: 150ms;
+  --transition-base: 220ms;
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.44, 1);
+
+  /* Layout */
+  --container-max-width: 1440px;
+  --container-padding: 24px;
+
+  /* Glass surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-blur: 14px;
+}
+
+/* ==========================================================================
+   MOTION & EFFECTS LIBRARY
+   Reusable keyframes and helpers to keep the experience alive.
+   Scoped components may define their own; these are the shared set.
+   ========================================================================== */
+
+@keyframes drugza-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes drugza-fade-in-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drugza-pop-in {
+  0% { opacity: 0; transform: scale(0.92); }
+  60% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes drugza-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes drugza-shine-sweep {
+  from { transform: translateX(-130%) skewX(-18deg); }
+  to { transform: translateX(230%) skewX(-18deg); }
+}
+
+@keyframes drugza-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(25, 118, 173, 0.18); }
+  50% { box-shadow: 0 0 0 10px rgba(25, 118, 173, 0); }
+}
+
+/* Brand gradient headline text */
+.drugza-gradient-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Frosted glass surface */
+.drugza-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+/* Global Reset & Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-off-white);
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Typography elements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--color-deep-blue);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+a {
+  color: var(--color-primary-blue);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-smooth);
+}
+
+a:hover {
+  color: var(--color-primary-blue-hover);
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Focus Visible Accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 2px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c3d2e0 0%, #a9bfd2 100%);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-off-white);
+  transition: background var(--dur-fast) var(--ease-smooth);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--color-primary-blue) 0%, var(--color-primary-blue-hover) 100%);
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--color-deep-blue);
+}
+
+/* Smooth touch scrolling on mobile containers */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Utility Containers */
+.drugza-container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+@media (max-width: 480px) {
+  .drugza-container {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+.drugza-container-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .drugza-container {
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+}
+
+/* Section Spacing */
+.drugza-section {
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+}
+
+@media (min-width: 768px) {
+  .drugza-section {
+    padding-top: var(--space-3xl);
+    padding-bottom: var(--space-3xl);
+  }
+}
+
+/* RTL and Arabic Typography Overrides */
+html,
+body,
+#app,
+.drugza-app-layout {
+  transform: none !important;
+}
+
+html[dir="rtl"],
+body[dir="rtl"],
+[dir="rtl"] {
+  --font-display: 'Cairo', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="ltr"],
+body[dir="ltr"],
+[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="rtl"] body {
+  font-family: var(--font-body);
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="ltr"] body {
+  font-family: var(--font-body);
+  direction: ltr;
+  text-align: left;
+}
+
+/* RTL Icon and Directional Flip */
+[dir="rtl"] .rtl-flip,
+[dir="rtl"] .arrow-icon,
+[dir="rtl"] svg.lucide-arrow-right,
+[dir="rtl"] svg.lucide-chevron-right {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] svg.lucide-arrow-left,
+[dir="rtl"] svg.lucide-chevron-left {
+  transform: scaleX(-1);
+}
+
+/* Global Mobile Responsive Adjustments */
+@media (max-width: 640px) {
+  :root {
+    --container-padding: 16px;
+    --space-2xl: 32px;
+    --space-3xl: 40px;
+  }
+
+  .drugza-container {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .drugza-section {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+}
+

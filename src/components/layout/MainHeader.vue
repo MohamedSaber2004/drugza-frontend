@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Search,
@@ -22,6 +22,7 @@ import DrugzaLogo from '@/components/ui/DrugzaLogo.vue';
 import Button from '@/components/ui/Button.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useCart } from '@/composables/useCart';
+import { useFavorites } from '@/composables/useFavorites';
 import { useI18n } from '@/composables/useI18n';
 
 const emit = defineEmits<{
@@ -32,13 +33,40 @@ const router = useRouter();
 const { t, locale, toggleLocale, isRtl } = useI18n();
 const { user, isAuthenticated, logout, fetchUserProfile } = useAuth();
 const { totalItemsCount, openCartDrawer } = useCart();
+const { favoritesCount, fetchFavorites } = useFavorites();
 
 const isUserMenuOpen = ref(false);
 const isMobileMenuOpen = ref(false);
+const isScrolled = ref(false);
+let scrollRaf = 0;
+
+function handleHeaderScroll() {
+  if (scrollRaf) return;
+  scrollRaf = requestAnimationFrame(() => {
+    isScrolled.value = window.scrollY > 12;
+    scrollRaf = 0;
+  });
+}
 
 onMounted(() => {
-  if (isAuthenticated.value && user.value?.id) {
-    fetchUserProfile(user.value.id).catch(() => {});
+  window.addEventListener('scroll', handleHeaderScroll, { passive: true });
+  handleHeaderScroll();
+  if (isAuthenticated.value) {
+    if (user.value?.id) {
+      fetchUserProfile(user.value.id).catch(() => {});
+    }
+    fetchFavorites().catch(() => {});
+  }
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleHeaderScroll);
+  if (scrollRaf) cancelAnimationFrame(scrollRaf);
+});
+
+watch(isAuthenticated, (authed) => {
+  if (authed) {
+    fetchFavorites(true).catch(() => {});
   }
 });
 
@@ -87,10 +115,22 @@ function handleLogout() {
   logout();
   router.push('/');
 }
+
+watch(isMobileMenuOpen, (open) => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+});
+
+onUnmounted(() => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = '';
+  }
+});
 </script>
 
 <template>
-  <header class="drugza-main-header">
+  <header class="drugza-main-header" :class="{ 'is-scrolled': isScrolled }">
     <!-- Top Bar: Logo, Global Search, and Actions -->
     <div class="drugza-container header-inner">
       <!-- Logo -->
@@ -133,7 +173,12 @@ function handleLogout() {
 
         <!-- Wishlist / Favorites Dedicated Page Link -->
         <router-link to="/favorites" class="action-icon-btn" :title="t('nav.favorites')">
-          <Heart :size="20" />
+          <div class="cart-icon-wrap">
+            <Heart :size="20" />
+            <span v-if="favoritesCount > 0" class="cart-badge fav-badge">
+              {{ favoritesCount }}
+            </span>
+          </div>
           <span class="icon-label">{{ t('nav.favorites') }}</span>
         </router-link>
 
@@ -273,7 +318,7 @@ function handleLogout() {
       </div>
     </div>
 
-    <!-- Navigation Links Bar (Desktop >= 1024px: Home, Categories, Flash Sales, Providers, Products, FAQ) -->
+    <!-- Navigation Links Bar (Desktop >= 1024px: Home, Categories, Flash Sales, Providers, Products) -->
     <div class="header-nav-strip">
       <div class="drugza-container nav-strip-inner">
         <nav class="main-nav-links">
@@ -306,145 +351,208 @@ function handleLogout() {
       </div>
     </div>
 
-    <!-- Mobile Navigation Drawer Overlay & Panel (Screen < 1024px) -->
-    <div
-      v-if="isMobileMenuOpen"
-      class="mobile-nav-backdrop"
-      @click="isMobileMenuOpen = false"
-    ></div>
+    <!-- Mobile Navigation Sidebar Drawer (App-Style Sidebar) -->
+    <Teleport to="body">
+      <div
+        v-if="isMobileMenuOpen"
+        class="mobile-nav-backdrop"
+        @click="isMobileMenuOpen = false"
+      ></div>
 
-    <div v-if="isMobileMenuOpen" class="mobile-nav-panel">
-      <!-- Search Trigger in Mobile Drawer -->
-      <div class="mobile-search-btn" @click="emit('open-search'); isMobileMenuOpen = false">
-        <Search :size="18" />
-        <span>{{ t('nav.searchPlaceholder') }}</span>
-      </div>
-
-      <!-- Navigation Links Grid/List inside Drawer -->
-      <div class="mobile-nav-links">
-        <button
-          class="mobile-nav-item"
-          :class="{ 'is-active': router.currentRoute.value.path === '/' }"
-          @click="navigateTo('/')"
-        >
-          <Home :size="18" />
-          <span>{{ t('nav.home') }}</span>
-        </button>
-
-        <button
-          class="mobile-nav-item"
-          :class="{ 'is-active': router.currentRoute.value.path === '/categories' }"
-          @click="navigateTo('/categories')"
-        >
-          <Layers :size="18" />
-          <span>{{ t('nav.categories') }}</span>
-        </button>
-
-        <button
-          class="mobile-nav-item highlight-flash"
-          :class="{ 'is-active': router.currentRoute.value.path === '/flash-sales' }"
-          @click="navigateTo('/flash-sales')"
-        >
-          <Flame :size="18" />
-          <span>🔥 {{ t('nav.flashSales') }}</span>
-        </button>
-
-        <button
-          class="mobile-nav-item"
-          :class="{ 'is-active': router.currentRoute.value.path === '/providers' }"
-          @click="navigateTo('/providers')"
-        >
-          <Building2 :size="18" />
-          <span>{{ t('nav.distributors') }}</span>
-        </button>
-
-        <button
-          class="mobile-nav-item"
-          :class="{ 'is-active': router.currentRoute.value.path === '/catalog' }"
-          @click="navigateTo('/catalog')"
-        >
-          <Package :size="18" />
-          <span>{{ t('nav.allProducts') }}</span>
-        </button>
-
-        <button
-          class="mobile-nav-item"
-          :class="{ 'is-active': router.currentRoute.value.path === '/favorites' }"
-          @click="navigateTo('/favorites')"
-        >
-          <Heart :size="18" />
-          <span>{{ t('nav.favorites') }}</span>
-        </button>
-
-        <button
-          class="mobile-nav-item"
-          :class="{ 'is-active': router.currentRoute.value.path === '/orders' }"
-          @click="navigateTo('/orders')"
-        >
-          <Package :size="18" />
-          <span>{{ t('nav.orders') }}</span>
-        </button>
-
-        <template v-if="isAuthenticated">
+      <aside
+        v-if="isMobileMenuOpen"
+        class="mobile-nav-sidebar"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation Menu"
+      >
+        <!-- Sidebar Top Header -->
+        <div class="sidebar-header">
+          <router-link to="/" class="sidebar-logo-link" @click="isMobileMenuOpen = false">
+            <DrugzaLogo size="sm" :show-tagline="false" />
+          </router-link>
           <button
-            class="mobile-nav-item"
-            :class="{ 'is-active': router.currentRoute.value.path === '/profile' }"
-            @click="navigateTo('/profile')"
+            type="button"
+            class="sidebar-close-btn"
+            @click="isMobileMenuOpen = false"
+            :aria-label="locale === 'ar' ? 'إغلاق القائمة' : 'Close menu'"
           >
-            <User :size="18" />
-            <span>{{ t('nav.profile') }}</span>
+            <X :size="20" />
           </button>
-          <button
-            class="mobile-nav-item"
-            :class="{ 'is-active': router.currentRoute.value.path === '/addresses' }"
-            @click="navigateTo('/addresses')"
-          >
-            <MapPin :size="18" />
-            <span>{{ t('nav.addresses') }}</span>
-          </button>
-        </template>
-      </div>
+        </div>
 
-      <!-- Language Switch in Mobile Menu -->
-      <button type="button" class="mobile-lang-drawer-btn" @click="toggleLocale">
-        <Globe :size="18" />
-        <span>{{ locale === 'ar' ? 'English (Switch to English)' : 'اللغة العربية (التحويل للعربية)' }}</span>
-      </button>
-
-      <!-- Auth section in Mobile Drawer -->
-      <div class="mobile-auth-sec">
-        <template v-if="isAuthenticated && user">
-          <div class="mobile-user-card">
-            <strong>{{ user.fullName || user.businessName }}</strong>
-            <span>{{ user.businessName }}</span>
-            <span class="user-email-micro">{{ user.email }}</span>
+        <!-- Scrollable Body -->
+        <div class="sidebar-scrollable-body">
+          <!-- User / Guest Profile Card -->
+          <div v-if="isAuthenticated && user" class="sidebar-user-card">
+            <div class="sidebar-user-avatar">
+              {{ avatarInitial }}
+            </div>
+            <div class="sidebar-user-details">
+              <strong class="sidebar-user-name">{{ displayName }}</strong>
+              <span class="sidebar-business-tag">{{ pharmacyName }}</span>
+              <span class="sidebar-user-email">{{ user.email }}</span>
+            </div>
           </div>
-          <Button variant="danger" size="md" block @click="handleLogout">
-            <LogOut :size="16" />
-            <span>{{ t('nav.logout') }}</span>
-          </Button>
-        </template>
-        <template v-else>
-          <Button variant="primary" size="md" block @click="navigateTo('/auth/login')">
-            {{ t('nav.signIn') }}
-          </Button>
-          <Button variant="secondary" size="md" block @click="navigateTo('/auth/register')">
-            {{ t('nav.registerPharmacy') }}
-          </Button>
-        </template>
-      </div>
-    </div>
+          <div v-else class="sidebar-guest-card">
+            <div class="guest-icon-circle">
+              <User :size="20" />
+            </div>
+            <div class="guest-info">
+              <strong>{{ locale === 'ar' ? 'بوابة الصيادلة والمستودعات' : 'Pharmacist & Supplier Portal' }}</strong>
+              <span>{{ locale === 'ar' ? 'سجل دخولك لتصفح الأسعار والشحن المباشر' : 'Sign in to access B2B pricing & express shipping' }}</span>
+            </div>
+          </div>
+
+          <!-- Search Trigger in Mobile Drawer -->
+          <div class="mobile-search-btn" @click="emit('open-search'); isMobileMenuOpen = false">
+            <Search :size="18" class="search-ico" />
+            <span class="search-placeholder">{{ t('nav.searchPlaceholder') }}</span>
+          </div>
+
+          <!-- Section: Main Menu -->
+          <div class="sidebar-nav-group">
+            <span class="group-title">{{ locale === 'ar' ? 'التصفح والتسوق' : 'Marketplace' }}</span>
+            <div class="mobile-nav-links">
+              <button
+                class="mobile-nav-item"
+                :class="{ 'is-active': router.currentRoute.value.path === '/' }"
+                @click="navigateTo('/')"
+              >
+                <Home :size="18" />
+                <span>{{ t('nav.home') }}</span>
+              </button>
+
+              <button
+                class="mobile-nav-item"
+                :class="{ 'is-active': router.currentRoute.value.path === '/categories' }"
+                @click="navigateTo('/categories')"
+              >
+                <Layers :size="18" />
+                <span>{{ t('nav.categories') }}</span>
+              </button>
+
+              <button
+                class="mobile-nav-item highlight-flash"
+                :class="{ 'is-active': router.currentRoute.value.path === '/flash-sales' }"
+                @click="navigateTo('/flash-sales')"
+              >
+                <Flame :size="18" />
+                <span>🔥 {{ t('nav.flashSales') }}</span>
+              </button>
+
+              <button
+                class="mobile-nav-item"
+                :class="{ 'is-active': router.currentRoute.value.path === '/providers' }"
+                @click="navigateTo('/providers')"
+              >
+                <Building2 :size="18" />
+                <span>{{ t('nav.distributors') }}</span>
+              </button>
+
+              <button
+                class="mobile-nav-item"
+                :class="{ 'is-active': router.currentRoute.value.path === '/catalog' }"
+                @click="navigateTo('/catalog')"
+              >
+                <Package :size="18" />
+                <span>{{ t('nav.allProducts') }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Section: Account & Management -->
+          <div class="sidebar-nav-group">
+            <span class="group-title">{{ locale === 'ar' ? 'حساب الصيدلية والإدارة' : 'Pharmacy Account' }}</span>
+            <div class="mobile-nav-links">
+              <button
+                class="mobile-nav-item"
+                :class="{ 'is-active': router.currentRoute.value.path === '/favorites' }"
+                @click="navigateTo('/favorites')"
+              >
+                <Heart :size="18" />
+                <span>{{ t('nav.favorites') }}</span>
+              </button>
+
+              <button
+                class="mobile-nav-item"
+                :class="{ 'is-active': router.currentRoute.value.path === '/orders' }"
+                @click="navigateTo('/orders')"
+              >
+                <Package :size="18" />
+                <span>{{ t('nav.orders') }}</span>
+              </button>
+
+              <template v-if="isAuthenticated">
+                <button
+                  class="mobile-nav-item"
+                  :class="{ 'is-active': router.currentRoute.value.path === '/profile' }"
+                  @click="navigateTo('/profile')"
+                >
+                  <User :size="18" />
+                  <span>{{ t('nav.profile') }}</span>
+                </button>
+                <button
+                  class="mobile-nav-item"
+                  :class="{ 'is-active': router.currentRoute.value.path === '/addresses' }"
+                  @click="navigateTo('/addresses')"
+                >
+                  <MapPin :size="18" />
+                  <span>{{ t('nav.addresses') }}</span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Language Switch in Mobile Menu -->
+          <button type="button" class="mobile-lang-drawer-btn" @click="toggleLocale">
+            <Globe :size="18" />
+            <span>{{ locale === 'ar' ? 'English (Switch to English)' : 'اللغة العربية (التحويل للعربية)' }}</span>
+          </button>
+        </div>
+
+        <!-- Sticky Bottom Auth Section -->
+        <div class="sidebar-footer">
+          <template v-if="isAuthenticated && user">
+            <Button variant="danger" size="md" block @click="handleLogout">
+              <LogOut :size="16" />
+              <span>{{ t('nav.logout') }}</span>
+            </Button>
+          </template>
+          <template v-else>
+            <Button variant="primary" size="md" block @click="navigateTo('/auth/login')">
+              {{ t('nav.signIn') }}
+            </Button>
+            <Button variant="secondary" size="md" block @click="navigateTo('/auth/register')">
+              {{ t('nav.registerPharmacy') }}
+            </Button>
+          </template>
+        </div>
+      </aside>
+    </Teleport>
   </header>
 </template>
 
 <style scoped>
 .drugza-main-header {
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 4px rgba(18, 73, 107, 0.04);
+  box-shadow: 0 1px 0 rgba(18, 73, 107, 0.04), 0 6px 20px -12px rgba(18, 73, 107, 0.12);
+  transition:
+    background-color var(--dur-base) var(--ease-smooth),
+    box-shadow var(--dur-base) var(--ease-smooth);
+}
+
+.drugza-main-header.is-scrolled {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 1px 0 rgba(18, 73, 107, 0.05),
+    0 10px 30px -10px rgba(18, 73, 107, 0.22);
 }
 
 .header-inner {
@@ -733,6 +841,16 @@ function handleLogout() {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
+.cart-badge.fav-badge {
+  background-color: #DC5B61;
+  color: #FFFFFF;
+}
+
+[dir="rtl"] .cart-badge {
+  right: auto;
+  left: -10px;
+}
+
 .divider {
   width: 1px;
   height: 32px;
@@ -971,7 +1089,7 @@ function handleLogout() {
 .nav-link-item.is-active {
   color: var(--color-primary-blue);
   background: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(25, 118, 173, 0.16), 0 2px 6px rgba(18, 73, 107, 0.06);
 }
 
 .flash-nav-item {
@@ -1021,87 +1139,395 @@ function handleLogout() {
   padding: 4px;
 }
 
-/* Mobile Drawer */
-.mobile-nav-panel {
-  display: none;
-  position: absolute;
-  top: 72px;
-  left: 0;
-  right: 0;
-  background: #FFFFFF;
-  border-bottom: 2px solid var(--color-primary-blue);
-  box-shadow: var(--shadow-lg);
-  padding: var(--space-md);
-  flex-direction: column;
-  gap: var(--space-md);
-  animation: fadeIn 0.2s ease-out;
+/* Mobile Navigation Sidebar Drawer (App-Style Sidebar) */
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 73, 107, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  animation: backdropFadeIn 0.25s ease-out;
 }
 
-.mobile-search-btn {
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-nav-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  width: 84vw;
+  max-width: 320px;
+  height: 100vh;
+  height: 100dvh;
+  background: #FFFFFF;
+  box-shadow: 0 0 40px rgba(18, 73, 107, 0.25);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  animation: slideInFromLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[dir="rtl"] .mobile-nav-sidebar {
+  left: auto;
+  right: 0;
+  animation: slideInFromRight 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Sidebar Top Header */
+.sidebar-header {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.sidebar-logo-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.sidebar-close-btn {
+  background: var(--color-off-white);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--dur-fast);
+}
+
+.sidebar-close-btn:hover {
+  background: var(--color-pale-blue);
+  color: var(--color-primary-blue);
+  border-color: var(--color-primary-blue);
+}
+
+/* Scrollable Body */
+.sidebar-scrollable-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sidebar-scrollable-body::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scrollable-body::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}
+
+/* User Profile Card */
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--color-pale-blue), #F0F9FF);
+  border: 1px solid rgba(25, 118, 173, 0.2);
+  border-radius: var(--radius-md);
+}
+
+.sidebar-user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-blue);
+  color: #FFFFFF;
+  font-weight: var(--font-weight-bold);
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(25, 118, 173, 0.3);
+}
+
+.sidebar-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.sidebar-user-name {
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-deep-blue);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-business-tag {
+  font-size: 0.6875rem;
+  color: var(--color-primary-blue);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-email {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Guest Card */
+.sidebar-guest-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 12px;
   background: var(--color-off-white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
 }
 
-.mobile-nav-links {
+.guest-icon-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-pale-blue);
+  color: var(--color-primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.guest-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.guest-info strong {
+  font-size: 0.8125rem;
+  color: var(--color-deep-blue);
+}
+
+.guest-info span {
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+}
+
+/* Search Button inside Sidebar */
+.mobile-search-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-off-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all var(--dur-fast);
+}
+
+.mobile-search-btn:hover {
+  background: #FFFFFF;
+  border-color: var(--color-primary-blue);
+}
+
+.mobile-search-btn .search-ico {
+  color: var(--color-primary-blue);
+  flex-shrink: 0;
+}
+
+.mobile-search-btn .search-placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Nav Groups */
+.sidebar-nav-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+.group-title {
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  padding: 0 4px;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .mobile-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 10px 12px;
-  text-align: left;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  width: 100%;
+  text-align: inherit;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
   color: var(--color-deep-blue);
-  border-radius: var(--radius-sm);
-  background: var(--color-off-white);
+  border-radius: var(--radius-md);
+  background: transparent;
   border: none;
   cursor: pointer;
+  transition: all var(--dur-fast);
+}
+
+.mobile-nav-item:hover {
+  background: var(--color-off-white);
+  color: var(--color-primary-blue);
+}
+
+.mobile-nav-item.is-active {
+  background: var(--color-primary-blue-light);
+  color: var(--color-primary-blue);
+  font-weight: var(--font-weight-bold);
 }
 
 .mobile-nav-item.highlight-flash {
   color: #C0392B;
+}
+
+.mobile-nav-item.highlight-flash:hover {
   background: #FDEDEC;
 }
 
-.mobile-auth-sec {
+/* Language Switch */
+.mobile-lang-drawer-btn {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  padding-top: var(--space-xs);
-  border-top: 1px solid var(--color-border);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--color-off-white);
+  color: var(--color-primary-blue);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  margin-top: 4px;
 }
 
-.mobile-user-card {
-  padding: 8px 12px;
-  background: var(--color-pale-blue);
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
+.mobile-lang-drawer-btn:hover {
+  background: var(--color-primary-blue-light);
+  border-color: var(--color-primary-blue);
 }
 
-@media (max-width: 860px) {
+/* Sticky Bottom Auth Section */
+.sidebar-footer {
+  padding: 14px 16px;
+  background: #FFFFFF;
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-search-icon-btn {
+  display: none;
+}
+
+/* Intermediate Laptop Breakpoint: 1025px - 1200px */
+@media (max-width: 1200px) {
+  .search-trigger-box {
+    max-width: 320px;
+  }
+  .search-kbd {
+    display: none;
+  }
+  .action-icon-btn:not(.cart-btn) .icon-label,
+  .cart-btn .icon-label {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .user-info-text {
+    display: none;
+  }
+  .search-trigger-box {
+    max-width: 220px;
+  }
+  .auth-buttons-group :deep(button) {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Tablet & Mobile Breakpoint: <= 1024px */
+@media (max-width: 1024px) {
   .header-nav-strip {
     display: none;
   }
 
   .search-trigger-box,
   .divider,
-  .action-icon-btn.cart-btn .icon-label,
-  .action-icon-btn:not(.cart-btn),
+  .action-icon-btn:not(.mobile-search-icon-btn):not(.cart-btn),
   .auth-buttons-group {
+    display: none;
+  }
+
+  .mobile-search-icon-btn {
+    display: flex;
+  }
+
+  .mobile-search-icon-btn .icon-label {
+    display: none;
+  }
+
+  .action-icon-btn.cart-btn {
+    display: flex;
+  }
+
+  .action-icon-btn.cart-btn .icon-label {
     display: none;
   }
 
@@ -1109,12 +1535,52 @@ function handleLogout() {
     display: flex;
   }
 
-  .mobile-nav-panel {
-    display: flex;
-  }
-
   .mobile-lang-quick-btn {
     display: inline-flex;
+  }
+}
+
+/* Small Screens: <= 600px */
+@media (max-width: 600px) {
+  .header-inner {
+    height: 64px;
+    gap: var(--space-xs);
+  }
+
+  .logo-link :deep(.drugza-brand-tagline) {
+    display: none;
+  }
+
+  .logo-link :deep(.drugza-pill-icon) {
+    width: 30px;
+    height: 30px;
+  }
+
+  .logo-link :deep(.drugza-brand-name) {
+    font-size: 1.35rem;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .action-icon-btn {
+    padding: 4px 6px;
+  }
+
+  .mobile-toggle-btn {
+    padding: 4px;
+  }
+}
+
+/* Ultra compact: <= 360px */
+@media (max-width: 360px) {
+  .logo-link :deep(.drugza-brand-name) {
+    font-size: 1.15rem;
+  }
+  .mobile-lang-quick-btn {
+    padding: 3px 6px;
+    font-size: 0.6875rem;
   }
 }
 

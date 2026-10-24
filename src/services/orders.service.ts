@@ -1,10 +1,19 @@
 import { apiClient } from './client';
-import type {
-  Order,
-  OrderItem,
-  CreateOrderDto,
-  DeliveryTimeSlotDto
+import {
+  type Order,
+  type OrderItem,
+  type CreateOrderDto,
+  type DeliveryTimeSlotDto,
+  OrderStatus
 } from '@/types';
+
+export {
+  type Order,
+  type OrderItem,
+  type CreateOrderDto,
+  type DeliveryTimeSlotDto,
+  OrderStatus
+};
 
 export interface BackendOrderItemDto {
   id: string;
@@ -42,14 +51,131 @@ export interface BackendOrderGroupDto {
   coupon?: number;
   shippingFees?: number;
   orders?: BackendSubOrderDto[];
+  items?: BackendOrderItemDto[];
 }
 
-export function mapBackendOrder(group: BackendOrderGroupDto): Order {
-  const allItems: OrderItem[] = [];
-  let supplierName = 'Direct Warehouse';
-  let address = 'Cairo, Egypt';
-  let createdAt = new Date().toISOString();
+/**
+ * Returns localized status label, badge variant, and canonical status name
+ */
+export function getOrderStatusMeta(status: number | OrderStatus | undefined | string, locale = 'ar') {
+  let code = 0;
+  if (typeof status === 'number') {
+    code = status;
+  } else if (typeof status === 'string') {
+    const num = parseInt(status, 10);
+    if (!isNaN(num)) {
+      code = num;
+    } else {
+      const lower = status.toLowerCase();
+      if (lower.includes('partially')) code = OrderStatus.PartiallyRefunded;
+      else if (lower.includes('refund')) code = OrderStatus.Refund;
+      else if (lower.includes('deliver')) code = OrderStatus.Delivered;
+      else if (lower.includes('complete')) code = OrderStatus.Completed;
+      else if (lower.includes('ship')) code = OrderStatus.Shipped;
+      else if (lower.includes('prepar')) code = OrderStatus.Prepared;
+      else if (lower.includes('approv')) code = OrderStatus.Approved;
+      else if (lower.includes('reject')) code = OrderStatus.Rejected;
+      else if (lower.includes('reassign')) code = OrderStatus.ReAssignTo;
+      else if (lower.includes('cancel')) code = OrderStatus.Cancel;
+      else code = OrderStatus.Pending;
+    }
+  }
 
+  switch (code) {
+    case OrderStatus.Pending: // 0
+      return {
+        code,
+        label: locale === 'ar' ? 'قيد الانتظار' : 'Pending',
+        variant: 'warning' as const,
+        name: 'Pending'
+      };
+    case OrderStatus.Approved: // 1
+      return {
+        code,
+        label: locale === 'ar' ? 'تمت الموافقة' : 'Approved',
+        variant: 'info' as const,
+        name: 'Approved'
+      };
+    case OrderStatus.Rejected: // 2
+      return {
+        code,
+        label: locale === 'ar' ? 'مرفوض' : 'Rejected',
+        variant: 'danger' as const,
+        name: 'Rejected'
+      };
+    case OrderStatus.Prepared: // 3
+      return {
+        code,
+        label: locale === 'ar' ? 'تم التجهيز' : 'Prepared',
+        variant: 'info' as const,
+        name: 'Prepared'
+      };
+    case OrderStatus.Shipped: // 4
+      return {
+        code,
+        label: locale === 'ar' ? 'تم الشحن' : 'Shipped',
+        variant: 'info' as const,
+        name: 'Shipped'
+      };
+    case OrderStatus.Delivered: // 5
+      return {
+        code,
+        label: locale === 'ar' ? 'تم التوصيل' : 'Delivered',
+        variant: 'success' as const,
+        name: 'Delivered'
+      };
+    case OrderStatus.Completed: // 6
+      return {
+        code,
+        label: locale === 'ar' ? 'مكتمل' : 'Completed',
+        variant: 'success' as const,
+        name: 'Completed'
+      };
+    case OrderStatus.ReAssignTo: // 7
+      return {
+        code,
+        label: locale === 'ar' ? 'إعادة تعيين' : 'Re-assigned',
+        variant: 'warning' as const,
+        name: 'ReAssignTo'
+      };
+    case OrderStatus.Refund: // 8
+      return {
+        code,
+        label: locale === 'ar' ? 'مرتجع (مسترجع)' : 'Refunded',
+        variant: 'danger' as const,
+        name: 'Refund'
+      };
+    case OrderStatus.Cancel: // 9
+      return {
+        code,
+        label: locale === 'ar' ? 'ملغي' : 'Cancelled',
+        variant: 'neutral' as const,
+        name: 'Cancel'
+      };
+    case OrderStatus.PartiallyRefunded: // 10
+      return {
+        code,
+        label: locale === 'ar' ? 'مسترجع جزئياً' : 'Partially Refunded',
+        variant: 'warning' as const,
+        name: 'PartiallyRefunded'
+      };
+    default:
+      return {
+        code,
+        label: locale === 'ar' ? 'قيد الانتظار' : 'Pending',
+        variant: 'neutral' as const,
+        name: 'Pending'
+      };
+  }
+}
+
+export function mapBackendOrder(group: any): Order {
+  const allItems: OrderItem[] = [];
+  let supplierName = '';
+  let address = group.address || '';
+  let createdAt = group.orderDate || new Date().toISOString();
+
+  // 1. If orders array is present (multi-suborder structure)
   if (Array.isArray(group.orders)) {
     for (const sub of group.orders) {
       if (sub.inventoryName) supplierName = sub.inventoryName;
@@ -62,36 +188,73 @@ export function mapBackendOrder(group: BackendOrderGroupDto): Order {
             id: item.id,
             productId: item.productId,
             productName: item.productName,
+            inventoryName: item.inventoryName || sub.inventoryName,
+            inventoryUserId: item.inventoryUserId || sub.inventoryUserId,
             quantity: item.quantity,
             price: item.unitPrice,
             unitPrice: item.unitPrice,
-            totalPrice: item.quantity * item.unitPrice
+            totalPrice: item.quantity * item.unitPrice,
+            status: item.status,
+            statusCode: item.status
           });
         }
       }
     }
   }
 
-  // Map status: 10 is completed, 0-2 is pending/preparing, etc.
-  let mappedStatus: Order['status'] = 'processing';
-  if (group.status === 10) mappedStatus = 'delivered';
-  else if (group.status === 8) mappedStatus = 'shipped';
-  else if (group.status === 4 || group.status === 5) mappedStatus = 'confirmed';
-  else if (group.status === -1) mappedStatus = 'cancelled';
+  // 2. If items array is directly on the order group (single order structure as returned by API)
+  if (Array.isArray(group.items)) {
+    for (const item of group.items) {
+      if (item.inventoryName && !supplierName) {
+        supplierName = item.inventoryName;
+      }
+      allItems.push({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        inventoryName: item.inventoryName,
+        inventoryUserId: item.inventoryUserId,
+        quantity: item.quantity,
+        price: item.unitPrice,
+        unitPrice: item.unitPrice,
+        totalPrice: item.quantity * item.unitPrice,
+        status: item.status,
+        statusCode: item.status
+      });
+    }
+  }
+
+  const rawStatusCode = typeof group.status === 'number' ? group.status : 0;
+  const statusMeta = getOrderStatusMeta(rawStatusCode, 'en');
+
+  const rawId = group.orderNumber || group.id || 'ORDER';
+  const orderNumberStr = String(rawId);
+  const formattedOrderNumber = orderNumberStr.toUpperCase().startsWith('DRG-')
+    ? orderNumberStr.toUpperCase()
+    : `DRG-${orderNumberStr.toUpperCase()}`;
+
+  const calcSubtotal = allItems.reduce((acc, i) => acc + i.totalPrice, 0);
+  const subtotal = group.totalAmountOrder != null && group.totalAmountOrder > 0
+    ? group.totalAmountOrder
+    : (group.totalAmount != null && group.totalAmount > 0 ? group.totalAmount : calcSubtotal);
+  const total = group.totalAmountOrderAfter != null && group.totalAmountOrderAfter > 0
+    ? group.totalAmountOrderAfter
+    : (subtotal + (group.shippingFees || 0));
 
   return {
-    id: group.orderNumber,
-    orderNumber: `DRG-${group.orderNumber.toUpperCase()}`,
+    id: orderNumberStr,
+    orderNumber: formattedOrderNumber,
     createdAt,
-    status: mappedStatus,
+    status: statusMeta.name,
+    statusCode: rawStatusCode,
     items: allItems,
-    supplierId: group.orders?.[0]?.inventoryUserId || 'warehouse',
+    supplierId: group.orders?.[0]?.inventoryUserId || allItems[0]?.inventoryUserId || '',
     supplierName,
-    subtotal: group.totalAmountOrder || allItems.reduce((acc, i) => acc + i.totalPrice, 0),
+    subtotal,
     shippingFee: group.shippingFees || 0,
-    total: group.totalAmountOrderAfter || group.totalAmountOrder || allItems.reduce((acc, i) => acc + i.totalPrice, 0),
+    total,
     deliveryAddress: address,
-    estimatedDelivery: 'Same Day GDP Cold-Chain'
+    estimatedDelivery: group.deliveryOptionName || ''
   };
 }
 

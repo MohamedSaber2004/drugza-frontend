@@ -25,6 +25,7 @@ import { useAuth } from '@/composables/useAuth';
 import { useI18n } from '@/composables/useI18n';
 import { useToast } from '@/composables/useToast';
 import { authService } from '@/services/auth.service';
+import { getPlaceholder, onImageError } from '@/utils/placeholders';
 import Button from '@/components/ui/Button.vue';
 
 const router = useRouter();
@@ -215,13 +216,6 @@ const avatarInitial = computed(() => {
   return name.trim().charAt(0).toUpperCase() || 'P';
 });
 
-const locationDisplay = computed(() => {
-  const parts = [user.value?.cityName, user.value?.areaName].filter(
-    p => p && p.trim() && p.toLowerCase() !== 'null' && p.toLowerCase() !== 'undefined'
-  );
-  if (parts.length > 0) return parts.join(locale.value === 'ar' ? '، ' : ', ');
-  return locale.value === 'ar' ? 'الموقع غير محدد' : 'Location not specified';
-});
 </script>
 
 <template>
@@ -242,11 +236,11 @@ const locationDisplay = computed(() => {
             :src="user.profileImage"
             :alt="displayName"
             class="profile-img"
+            @error="onImageError($event, 'user')"
           />
           <div v-else class="avatar-fallback">
-            {{ avatarInitial }}
+            <img :src="getPlaceholder('user')" :alt="displayName" class="profile-img" />
           </div>
-          <span class="online-dot" :title="user?.isActive ? 'Active Account' : 'Account Status'"></span>
         </div>
 
         <div class="profile-hero-info">
@@ -279,10 +273,6 @@ const locationDisplay = computed(() => {
             <span class="contact-badge" :class="{ 'is-empty': isBlank(user?.phoneNumber) }">
               <Phone :size="14" />
               <span dir="ltr">{{ valOrPlaceholder(user?.phoneNumber, locale === 'ar' ? 'الهاتف غير متوفر' : 'No phone') }}</span>
-            </span>
-            <span class="contact-badge" :class="{ 'is-empty': isBlank(user?.cityName) && isBlank(user?.areaName) }">
-              <MapPin :size="14" />
-              <span>{{ locationDisplay }}</span>
             </span>
           </div>
         </div>
@@ -318,7 +308,7 @@ const locationDisplay = computed(() => {
         </div>
       </div>
 
-      <div class="profile-grid-layout">
+      <div class="profile-grid-layout" v-loading="isLoadingProfile || isSaving">
         <!-- Col 1: Real Profile Information from API -->
         <div class="profile-main-col">
           <!-- Main Profile Details Card (Fully Bound to API fields with Placeholders) -->
@@ -399,19 +389,6 @@ const locationDisplay = computed(() => {
                 </span>
               </div>
 
-              <div class="detail-tile">
-                <span class="detail-key">{{ locale === 'ar' ? 'المحافظة / المدينة' : 'City / Governorate' }}</span>
-                <span class="detail-val" :class="{ 'is-placeholder-val': isBlank(user?.cityName) }">
-                  {{ valOrPlaceholder(user?.cityName, locale === 'ar' ? 'غير محدد' : 'Not specified') }}
-                </span>
-              </div>
-
-              <div class="detail-tile">
-                <span class="detail-key">{{ locale === 'ar' ? 'المنطقة / الحي' : 'District / Area' }}</span>
-                <span class="detail-val" :class="{ 'is-placeholder-val': isBlank(user?.areaName) }">
-                  {{ valOrPlaceholder(user?.areaName, locale === 'ar' ? 'غير محدد' : 'Not specified') }}
-                </span>
-              </div>
 
               <div v-if="user?.minOrder" class="detail-tile">
                 <span class="detail-key">{{ locale === 'ar' ? 'الحد الأدنى للطلب' : 'Minimum Order' }}</span>
@@ -436,7 +413,7 @@ const locationDisplay = computed(() => {
                 <div class="avatar-upload-row">
                   <div class="preview-avatar-box">
                     <img v-if="imagePreviewUrl" :src="imagePreviewUrl" class="preview-img" />
-                    <span v-else class="preview-initial">{{ avatarInitial }}</span>
+                    <img v-else :src="getPlaceholder('user')" alt="Placeholder" class="preview-img" />
                   </div>
                   <div class="upload-btn-wrap">
                     <label class="custom-file-btn">
@@ -531,15 +508,15 @@ const locationDisplay = computed(() => {
               <div class="password-inputs-row">
                 <div class="form-group">
                   <label>{{ locale === 'ar' ? 'كلمة المرور الحالية' : 'Current Password' }} *</label>
-                  <input v-model="currentPassword" type="password" class="input-field" />
+                  <input v-model="currentPassword" type="password" class="input-field" autocomplete="current-password" />
                 </div>
                 <div class="form-group">
                   <label>{{ t('auth.newPass') }} *</label>
-                  <input v-model="newPassword" type="password" class="input-field" />
+                  <input v-model="newPassword" type="password" class="input-field" autocomplete="new-password" />
                 </div>
                 <div class="form-group">
                   <label>{{ t('auth.confirmNewPass') }} *</label>
-                  <input v-model="confirmPassword" type="password" class="input-field" />
+                  <input v-model="confirmPassword" type="password" class="input-field" autocomplete="new-password" />
                 </div>
               </div>
               <div class="pass-actions">
@@ -604,8 +581,8 @@ const locationDisplay = computed(() => {
             <p class="support-sub">
               {{ locale === 'ar' ? 'فريق خدمة العملاء والعمليات الصيدلانية متاح على مدار الساعة للإجابة على استفساراتك وتحديث بياناتك.' : 'Our pharmacist operations team is available around the clock to assist you with orders and inquiries.' }}
             </p>
-            <a href="tel:19890" class="support-hotline-btn">
-              <span>{{ locale === 'ar' ? 'اتصل على الخط الساخن' : 'Call 24/7 Hotline' }} (19890)</span>
+            <a href="mailto:support@drugza.com" class="support-contact-btn">
+              <span>{{ locale === 'ar' ? 'تواصل مع الدعم الفني' : 'Contact Support Desk' }}</span>
               <ArrowRight :size="16" class="arrow-icon" />
             </a>
           </div>
@@ -662,6 +639,7 @@ const locationDisplay = computed(() => {
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
     gap: var(--space-md);
+    margin-bottom: var(--space-md);
   }
 }
 
@@ -687,25 +665,11 @@ const locationDisplay = computed(() => {
 }
 
 .avatar-fallback {
-  font-size: 2.25rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary-blue);
-}
-
-.online-dot {
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: var(--color-success);
-  border: 2px solid #FFFFFF;
-}
-
-[dir="rtl"] .online-dot {
-  right: auto;
-  left: 6px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-hero-info {
@@ -807,9 +771,10 @@ const locationDisplay = computed(() => {
   align-items: flex-start;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1024px) {
   .profile-grid-layout {
     grid-template-columns: 1fr;
+    gap: var(--space-lg);
   }
 }
 
@@ -1197,7 +1162,7 @@ const locationDisplay = computed(() => {
   margin-bottom: var(--space-md);
 }
 
-.support-hotline-btn {
+.support-contact-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1211,7 +1176,7 @@ const locationDisplay = computed(() => {
   transition: transform var(--dur-fast);
 }
 
-.support-hotline-btn:hover {
+.support-contact-btn:hover {
   transform: translateY(-1px);
 }
 </style>

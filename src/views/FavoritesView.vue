@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Heart, ShoppingBag, ArrowRight } from 'lucide-vue-next';
+import { Heart, ArrowRight, Loader2 } from 'lucide-vue-next';
 import type { Product } from '@/types';
-import { productsService } from '@/services';
 import { useFavorites } from '@/composables/useFavorites';
-import { useCart } from '@/composables/useCart';
 import { useToast } from '@/composables/useToast';
 import { useI18n } from '@/composables/useI18n';
 import ProductCard from '@/components/domain/ProductCard.vue';
@@ -16,31 +14,15 @@ import Pagination from '@/components/ui/Pagination.vue';
 const router = useRouter();
 const toast = useToast();
 const { t, locale } = useI18n();
-const { favoriteIds } = useFavorites();
-const { addItem } = useCart();
+const { favoriteProducts, fetchFavorites, isLoading } = useFavorites();
 
-const allProducts = ref<Product[]>([]);
 const selectedProduct = ref<Product | null>(null);
 const isProductModalOpen = ref(false);
 const currentPage = ref(1);
 const pageSize = 12;
 
 onMounted(async () => {
-  try {
-    const list = await productsService.getMyFavorites();
-    if (list.length > 0) {
-      allProducts.value = list;
-    } else {
-      const popular = await productsService.getPopularProducts();
-      allProducts.value = popular;
-    }
-  } catch (e) {
-    console.warn('Error loading favorites:', e);
-  }
-});
-
-const favoriteProducts = computed(() => {
-  return allProducts.value.filter(p => favoriteIds.value.includes(p.id));
+  await fetchFavorites(true);
 });
 
 const paginatedFavorites = computed(() => {
@@ -51,17 +33,6 @@ const paginatedFavorites = computed(() => {
 function handleViewProduct(prod: Product) {
   selectedProduct.value = prod;
   isProductModalOpen.value = true;
-}
-
-function reorderAll() {
-  if (favoriteProducts.value.length === 0) return;
-  for (const prod of favoriteProducts.value) {
-    addItem(prod, 10);
-  }
-  toast.success(locale.value === 'ar'
-    ? `تمت إضافة 10 وحدات من كل دواء في المفضلة (${favoriteProducts.value.length} أصناف) إلى عربة الطلبيات!`
-    : `Added 10 units of all ${favoriteProducts.value.length} favorite medicines to your wholesale cart!`
-  );
 }
 </script>
 
@@ -77,18 +48,17 @@ function reorderAll() {
             {{ t('favoritesPage.subtitle') }}
           </p>
         </div>
+      </div>
 
-        <div v-if="favoriteProducts.length > 0" class="fav-actions">
-          <Button variant="cta" size="md" @click="reorderAll">
-            <ShoppingBag :size="16" />
-            <span>{{ locale === 'ar' ? 'إعادة طلب الكل (10 وحدات لكل صنف)' : 'Reorder All Favorites (10x each)' }}</span>
-          </Button>
-        </div>
+      <!-- Loading State -->
+      <div v-if="isLoading" class="loading-state-card">
+        <Loader2 :size="36" class="spin-icon" />
+        <p>{{ locale === 'ar' ? 'جاري تحميل قائمة الأدوية المفضلة...' : 'Loading your favorite medicines...' }}</p>
       </div>
 
       <!-- Favorites Grid -->
-      <div v-if="favoriteProducts.length > 0">
-        <div class="fav-grid">
+      <div v-else-if="favoriteProducts.length > 0">
+        <div class="fav-grid" v-loading="isLoading">
           <ProductCard
             v-for="prod in paginatedFavorites"
             :key="prod.id"
@@ -169,6 +139,31 @@ function reorderAll() {
   color: var(--color-text-secondary);
 }
 
+.loading-state-card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+  color: var(--color-primary-blue);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .fav-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -189,9 +184,18 @@ function reorderAll() {
 }
 
 @media (max-width: 640px) {
+  .fav-header-row {
+    margin-bottom: var(--space-md);
+  }
   .fav-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .fav-grid {
+    grid-template-columns: 1fr;
   }
 }
 

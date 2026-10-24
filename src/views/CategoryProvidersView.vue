@@ -3,50 +3,35 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   Building2,
-  Layers,
   ArrowRight,
   ShieldCheck,
   Star,
-  Clock,
   MapPin,
-  ChevronRight,
-  ShoppingBag
+  ChevronRight
 } from 'lucide-vue-next';
-import type { Category, Supplier, Product } from '@/types';
+import type { Category, Supplier } from '@/types';
 import { categoriesService } from '@/services/categories.service';
-import { providersService } from '@/services/providers.service';
-import { productsService } from '@/services/products.service';
-import SupplierCard from '@/components/domain/SupplierCard.vue';
-import ProductCard from '@/components/domain/ProductCard.vue';
-import ProductDetailModal from '@/components/domain/ProductDetailModal.vue';
 import Button from '@/components/ui/Button.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import { useI18n } from '@/composables/useI18n';
+import { onImageError } from '@/utils/placeholders';
+import { encryptId, decryptId } from '@/utils/id-crypto';
 
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
 
-const categoryId = ref(route.params.id as string);
+const categoryId = ref(decryptId(route.params.id as string));
 const category = ref<Category | null>(null);
 const suppliers = ref<Supplier[]>([]);
-const categoryProducts = ref<Product[]>([]);
-const selectedProduct = ref<Product | null>(null);
-const isProductModalOpen = ref(false);
 const isLoading = ref(true);
 
 const suppliersPage = ref(1);
-const productsPage = ref(1);
 const pageSize = 12;
 
 const paginatedSuppliers = computed(() => {
   const start = (suppliersPage.value - 1) * pageSize;
   return suppliers.value.slice(start, start + pageSize);
-});
-
-const paginatedCategoryProducts = computed(() => {
-  const start = (productsPage.value - 1) * pageSize;
-  return categoryProducts.value.slice(start, start + pageSize);
 });
 
 onMounted(() => {
@@ -56,9 +41,8 @@ onMounted(() => {
 watch(
   () => route.params.id,
   (newId) => {
-    categoryId.value = newId as string;
+    categoryId.value = decryptId(newId as string);
     suppliersPage.value = 1;
-    productsPage.value = 1;
     loadData();
   }
 );
@@ -66,10 +50,9 @@ watch(
 async function loadData() {
   isLoading.value = true;
   try {
-    const [cat, sups, prods] = await Promise.allSettled([
+    const [cat, sups] = await Promise.allSettled([
       categoriesService.getCategoryById(categoryId.value),
-      providersService.getProviders(),
-      productsService.getProductsByCategory(categoryId.value)
+      categoriesService.getCategoryProviders(categoryId.value)
     ]);
 
     if (cat.status === 'fulfilled') {
@@ -77,9 +60,6 @@ async function loadData() {
     }
     if (sups.status === 'fulfilled') {
       suppliers.value = sups.value;
-    }
-    if (prods.status === 'fulfilled') {
-      categoryProducts.value = prods.value;
     }
   } catch {
     //
@@ -89,12 +69,7 @@ async function loadData() {
 }
 
 function handleSelectSupplier(supplier: Supplier) {
-  router.push(`/providers/${supplier.id}?category=${categoryId.value}`);
-}
-
-function handleViewProduct(prod: Product) {
-  selectedProduct.value = prod;
-  isProductModalOpen.value = true;
+  router.push(`/providers/${encryptId(supplier.id)}?category=${categoryId.value}`);
 }
 </script>
 
@@ -123,20 +98,22 @@ function handleViewProduct(prod: Product) {
               <Building2 :size="15" />
               <strong>{{ t('categoryProvidersPage.providersCount', { count: suppliers.length }) }}</strong>
             </span>
-            <span class="stat-tag">
-              <Layers :size="15" />
-              <strong>{{ t('categories.itemsCount', { count: categoryProducts.length }) }}</strong>
-            </span>
           </div>
         </div>
 
         <div class="cat-hero-visual">
-          <img :src="category.imageName" :alt="category.name" class="cat-hero-img" />
+          <img
+            :src="category.imageName"
+            :alt="category.name"
+            class="cat-hero-img"
+            loading="lazy"
+            @error="onImageError($event, 'category')"
+          />
         </div>
       </div>
 
       <!-- Section: Verified Providers for this Category -->
-      <section class="providers-section">
+      <section class="providers-section" v-loading="isLoading">
         <div class="section-title-wrap">
           <div>
             <span class="sub-label">{{ t('providers.badge') }}</span>
@@ -149,7 +126,7 @@ function handleViewProduct(prod: Product) {
           </div>
         </div>
 
-        <div class="providers-grid">
+        <div class="providers-grid" v-reveal.children>
           <div
             v-for="sup in paginatedSuppliers"
             :key="sup.id"
@@ -158,7 +135,13 @@ function handleViewProduct(prod: Product) {
           >
             <div class="box-top">
               <div class="sup-avatar">
-                <img v-if="sup.profileImage" :src="sup.profileImage" :alt="sup.businessName" />
+                <img
+                  v-if="sup.profileImage"
+                  :src="sup.profileImage"
+                  :alt="sup.businessName"
+                  loading="lazy"
+                  @error="onImageError($event, 'provider')"
+                />
                 <Building2 v-else :size="24" />
               </div>
               <div class="sup-meta-col">
@@ -169,27 +152,27 @@ function handleViewProduct(prod: Product) {
                     {{ t('providers.certifiedBadge') }}
                   </span>
                 </div>
-                <div class="loc-row">
+                <div v-if="sup.location" class="loc-row">
                   <MapPin :size="13" />
-                  <span>{{ sup.location || 'Cairo & Giza' }}</span>
+                  <span>{{ sup.location }}</span>
                 </div>
               </div>
             </div>
 
             <div class="box-specs">
-              <div class="spec-cell">
+              <div v-if="sup.minOrder && sup.minOrder > 0" class="spec-cell">
                 <span class="spec-k">{{ t('providers.minOrder') }}</span>
-                <strong class="spec-v">{{ sup.minOrder || 800 }} {{ t('common.currency') }}</strong>
+                <strong class="spec-v">{{ sup.minOrder }} {{ t('common.currency') }}</strong>
               </div>
-              <div class="spec-cell">
+              <div v-if="sup.deliverySpeed" class="spec-cell">
                 <span class="spec-k">{{ t('providers.deliveryTime') }}</span>
-                <strong class="spec-v">{{ sup.deliverySpeed || 'Same Day' }}</strong>
+                <strong class="spec-v">{{ sup.deliverySpeed }}</strong>
               </div>
-              <div class="spec-cell rating">
+              <div v-if="sup.rating" class="spec-cell rating">
                 <span class="spec-k">{{ locale === 'ar' ? 'التقييم' : 'Rating' }}</span>
                 <div class="stars-val">
                   <Star :size="13" fill="#F3CE79" stroke="#F3CE79" />
-                  <strong>{{ sup.rating || '4.9' }}</strong>
+                  <strong>{{ sup.rating }}</strong>
                 </div>
               </div>
             </div>
@@ -215,46 +198,7 @@ function handleViewProduct(prod: Product) {
           :item-label="t('nav.distributors')"
         />
       </section>
-
-      <!-- Section: Available Products in this Category -->
-      <section v-if="categoryProducts.length > 0" class="category-products-section">
-        <div class="section-title-wrap">
-          <div>
-            <span class="sub-label">{{ t('products.badge') }}</span>
-            <h2 class="section-title">{{ category?.name || 'Category Products' }}</h2>
-          </div>
-          <router-link :to="`/catalog?category=${categoryId}`" class="view-catalog-link">
-            <span>{{ t('products.viewAllProducts') }}</span>
-            <ArrowRight :size="16" class="arrow-icon" />
-          </router-link>
-        </div>
-
-        <div class="products-grid">
-          <ProductCard
-            v-for="prod in paginatedCategoryProducts"
-            :key="prod.id"
-            :product="prod"
-            @view-details="handleViewProduct"
-          />
-        </div>
-
-        <!-- Products Pagination -->
-        <Pagination
-          v-if="categoryProducts.length > 0"
-          v-model="productsPage"
-          :total-items="categoryProducts.length"
-          :page-size="pageSize"
-          :item-label="locale === 'ar' ? 'منتج' : 'products'"
-        />
-      </section>
     </div>
-
-    <!-- Modal -->
-    <ProductDetailModal
-      :product="selectedProduct"
-      :is-open="isProductModalOpen"
-      @close="isProductModalOpen = false"
-    />
   </div>
 </template>
 
@@ -375,8 +319,7 @@ function handleViewProduct(prod: Product) {
 }
 
 /* Sections */
-.providers-section,
-.category-products-section {
+.providers-section {
   margin-bottom: var(--space-3xl);
 }
 
@@ -560,35 +503,5 @@ function handleViewProduct(prod: Product) {
 
 .browse-sup-btn {
   margin-top: auto;
-}
-
-/* Products in Category */
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-lg);
-}
-
-@media (max-width: 1024px) {
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-md);
-  }
-}
-
-@media (max-width: 640px) {
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-}
-
-.view-catalog-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-sm);
-  color: var(--color-primary-blue);
-  font-weight: var(--font-weight-semibold);
 }
 </style>

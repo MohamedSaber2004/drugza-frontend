@@ -1,0 +1,1424 @@
+{
+  "/api/Address/get-user-Addresses": {
+    "get": {
+      "tags": [
+        "Address"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Balances/user/{userId}": {
+    "get": {
+      "tags": [
+        "Balances"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Balances/user-transactions/{userId}": {
+    "get": {
+      "tags": [
+        "Balances"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Carts/{userId}": {
+    "get": {
+      "tags": [
+        "Carts"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Categories/inventory/{inventoryUserId}/available-product-categories": {
+    "get": {
+      "tags": [
+        "Categories"
+      ],
+      "parameters": [
+        {
+          "name": "inventoryUserId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Invoices/user/{userId}": {
+    "get": {
+      "tags": [
+        "Invoices"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Invoices/Inventory/{userId}": {
+    "get": {
+      "tags": [
+        "Invoices"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Notifacations/{userId}": {
+    "get": {
+      "tags": [
+        "Notifacations"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Orders/all-user-orders": {
+    "get": {
+      "tags": [
+        "Orders"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Orders/orders-user": {
+    "get": {
+      "tags": [
+        "Orders"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/ProductPrices/my-prices/{userId}": {
+    "get": {
+      "tags": [
+        "ProductPrices"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          }
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/ProductPrices/by-inventory-user/{inventoryId}": {
+    "get": {
+      "tags": [
+        "ProductPrices"
+      ],
+      "parameters": [
+        {
+          "name": "inventoryId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "catId",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "default": 1
+          }
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "default": 10
+          }
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/ProductPrices/by-inventory-user-Provider/{inventoryId}": {
+    "get": {
+      "tags": [
+        "ProductPrices"
+      ],
+      "parameters": [
+        {
+          "name": "inventoryId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "catId",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "default": 1
+          }
+        },
+        {
+          "name": "pageSize",
+          "in": "query",
+          "schema": {
+            "type": "integer",
+            "format": "int32",
+            "default": 10
+          }
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Products/GetUsersWithFavorites": {
+    "get": {
+      "tags": [
+        "Products"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Roles/get-permissions-forUser": {
+    "get": {
+      "tags": [
+        "Roles"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/register": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "BussinesName": {
+                  "type": "string"
+                },
+                "FullName": {
+                  "type": "string"
+                },
+                "Email": {
+                  "type": "string"
+                },
+                "Password": {
+                  "type": "string"
+                },
+                "PhoneNumber": {
+                  "type": "string"
+                },
+                "AddressLines": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "IsActive": {
+                  "type": "boolean"
+                },
+                "RoleId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "AreaId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "CityId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "CountryId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "Salary": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "ZoneId": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32",
+                    "nullable": true
+                  }
+                },
+                "IsPopular": {
+                  "type": "boolean"
+                },
+                "ProfileImage": {
+                  "type": "string",
+                  "format": "binary"
+                },
+                "MinOrder": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            },
+            "encoding": {
+              "BussinesName": {
+                "style": "form"
+              },
+              "FullName": {
+                "style": "form"
+              },
+              "Email": {
+                "style": "form"
+              },
+              "Password": {
+                "style": "form"
+              },
+              "PhoneNumber": {
+                "style": "form"
+              },
+              "AddressLines": {
+                "style": "form"
+              },
+              "IsActive": {
+                "style": "form"
+              },
+              "RoleId": {
+                "style": "form"
+              },
+              "AreaId": {
+                "style": "form"
+              },
+              "CityId": {
+                "style": "form"
+              },
+              "CountryId": {
+                "style": "form"
+              },
+              "Salary": {
+                "style": "form"
+              },
+              "ZoneId": {
+                "style": "form"
+              },
+              "IsPopular": {
+                "style": "form"
+              },
+              "ProfileImage": {
+                "style": "form"
+              },
+              "MinOrder": {
+                "style": "form"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/{id}": {
+    "put": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "BussinesName": {
+                  "type": "string"
+                },
+                "FullName": {
+                  "type": "string"
+                },
+                "IsActive": {
+                  "type": "boolean"
+                },
+                "PhoneNumber": {
+                  "type": "string"
+                },
+                "IsPopular": {
+                  "type": "boolean"
+                },
+                "OrderNum": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "UploudProfileImage": {
+                  "type": "string",
+                  "format": "binary"
+                },
+                "MinOrder": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            },
+            "encoding": {
+              "BussinesName": {
+                "style": "form"
+              },
+              "FullName": {
+                "style": "form"
+              },
+              "IsActive": {
+                "style": "form"
+              },
+              "PhoneNumber": {
+                "style": "form"
+              },
+              "IsPopular": {
+                "style": "form"
+              },
+              "OrderNum": {
+                "style": "form"
+              },
+              "UploudProfileImage": {
+                "style": "form"
+              },
+              "MinOrder": {
+                "style": "form"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/AddOrUpdateWorkingHours/{id}": {
+    "put": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/WorkingHourRequestDto"
+              }
+            }
+          },
+          "text/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/WorkingHourRequestDto"
+              }
+            }
+          },
+          "application/*+json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/WorkingHourRequestDto"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/login": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginDto"
+            }
+          },
+          "text/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginDto"
+            }
+          },
+          "application/*+json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/users": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/get-recent-users": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/get-total-users": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/user/{userId}": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/by-role/{roleId}": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "roleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/soft-delete-user/{userId}": {
+    "delete": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/delete-user/{userId}": {
+    "delete": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/deActive-user": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "text/json": {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "application/*+json": {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/ChangePassword": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePassword"
+            }
+          },
+          "text/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePassword"
+            }
+          },
+          "application/*+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePassword"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/ChangePassword-fromAdmin": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePasswordFromAdmin"
+            }
+          },
+          "text/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePasswordFromAdmin"
+            }
+          },
+          "application/*+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePasswordFromAdmin"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/GetActive-Users-Last10Days": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/GetInActive-Users-Last10Days": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/verify-otp": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "email",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "code",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/forget-password": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "email",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/reset-password": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "email",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "newPassword",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/resend-otp": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "email",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/add-Provider": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "BussinesName": {
+                  "type": "string"
+                },
+                "Email": {
+                  "type": "string"
+                },
+                "Password": {
+                  "type": "string"
+                },
+                "PhoneNumber": {
+                  "type": "string"
+                },
+                "AddressLines": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "IsActive": {
+                  "type": "boolean"
+                },
+                "ProfileImage": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "encoding": {
+              "BussinesName": {
+                "style": "form"
+              },
+              "Email": {
+                "style": "form"
+              },
+              "Password": {
+                "style": "form"
+              },
+              "PhoneNumber": {
+                "style": "form"
+              },
+              "AddressLines": {
+                "style": "form"
+              },
+              "IsActive": {
+                "style": "form"
+              },
+              "ProfileImage": {
+                "style": "form"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/get-providers": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/get-top-providers": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/add-delivers": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "BussinesName": {
+                  "type": "string"
+                },
+                "FullName": {
+                  "type": "string"
+                },
+                "Email": {
+                  "type": "string"
+                },
+                "Password": {
+                  "type": "string"
+                },
+                "PhoneNumber": {
+                  "type": "string"
+                },
+                "AddressLines": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "IsActive": {
+                  "type": "boolean"
+                },
+                "RoleId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "AreaId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "CityId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "CountryId": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "Salary": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "ZoneId": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32",
+                    "nullable": true
+                  }
+                },
+                "IsPopular": {
+                  "type": "boolean"
+                },
+                "ProfileImage": {
+                  "type": "string",
+                  "format": "binary"
+                },
+                "MinOrder": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            },
+            "encoding": {
+              "BussinesName": {
+                "style": "form"
+              },
+              "FullName": {
+                "style": "form"
+              },
+              "Email": {
+                "style": "form"
+              },
+              "Password": {
+                "style": "form"
+              },
+              "PhoneNumber": {
+                "style": "form"
+              },
+              "AddressLines": {
+                "style": "form"
+              },
+              "IsActive": {
+                "style": "form"
+              },
+              "RoleId": {
+                "style": "form"
+              },
+              "AreaId": {
+                "style": "form"
+              },
+              "CityId": {
+                "style": "form"
+              },
+              "CountryId": {
+                "style": "form"
+              },
+              "Salary": {
+                "style": "form"
+              },
+              "ZoneId": {
+                "style": "form"
+              },
+              "IsPopular": {
+                "style": "form"
+              },
+              "ProfileImage": {
+                "style": "form"
+              },
+              "MinOrder": {
+                "style": "form"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/get-delivers": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/get-Preparation-delivers": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/get-user-WorkingHours/{userId}": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/save-fcm-token": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SaveFcmTokenDto"
+            }
+          },
+          "text/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SaveFcmTokenDto"
+            }
+          },
+          "application/*+json": {
+            "schema": {
+              "$ref": "#/components/schemas/SaveFcmTokenDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/EN-Password": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "pass",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/De-Password": {
+    "post": {
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "pass",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  },
+  "/api/Users/test": {
+    "get": {
+      "tags": [
+        "Users"
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        }
+      }
+    }
+  }
+}

@@ -10,6 +10,7 @@ export interface Product {
   discountRate?: number; // e.g. 15%
   brandId?: number;
   brandName?: string;
+  manufacturer?: string;
   categoryId?: string;
   categoryName?: string;
   activeIngredient?: string;
@@ -19,9 +20,18 @@ export interface Product {
   stockQuantity: number;
   minOrder?: number;
   description?: string;
+  arabicDescription?: string;
+  categoryArabicName?: string;
+  route?: string;
+  productImages?: string[];
   suppliersCount?: number;
   isPopular?: boolean;
   isFlashSale?: boolean;
+  productPriceId?: string;
+  inventoryId?: string;
+  inventoryName?: string;
+  isFavorite?: boolean;
+  productCode?: number;
 }
 
 export interface ProductSupplierPrice {
@@ -55,9 +65,11 @@ export interface Supplier {
   businessName: string;
   arabicName?: string;
   email: string;
+  phoneNumber?: string;
   profileImage?: string;
   isAvailableNow: boolean;
   minOrder?: number;
+  orderNum?: number;
   rating?: number;
   deliverySpeed?: string;
   location?: string;
@@ -75,13 +87,13 @@ export interface CartItem {
   quantity: number;
   effectivePrice: number;
   originalPrice: number;
-  minOrder: number;
 }
 
 export interface UserProfile {
   id: string;
   businessName: string;
   fullName: string;
+  userName?: string;
   email: string;
   phoneNumber: string;
   role?: string;
@@ -94,6 +106,25 @@ export interface UserProfile {
   addressLines?: string;
   profileImage?: string;
   verified: boolean;
+  isActive?: boolean;
+  isEmailConfirmed?: boolean;
+  createdAt?: string;
+  minOrder?: number;
+  salary?: number;
+}
+
+export enum OrderStatus {
+  Pending = 0,
+  Approved = 1,
+  Rejected = 2,
+  Prepared = 3,
+  Shipped = 4,
+  Delivered = 5,
+  Completed = 6,
+  ReAssignTo = 7,
+  Refund = 8,
+  Cancel = 9,
+  PartiallyRefunded = 10
 }
 
 export interface OrderItem {
@@ -101,17 +132,22 @@ export interface OrderItem {
   productId?: string;
   productName: string;
   strength?: string;
+  inventoryName?: string;
+  inventoryUserId?: string;
   quantity: number;
   price?: number;
   unitPrice: number;
   totalPrice: number;
+  status?: OrderStatus | number;
+  statusCode?: number;
 }
 
 export interface Order {
   id: string;
   orderNumber: string;
   createdAt: string;
-  status: 'Pending' | 'Approved' | 'Preparing' | 'Shipped' | 'Delivered' | 'Completed' | 'Cancelled' | 'processing' | 'confirmed' | 'delivered' | 'shipped' | 'cancelled';
+  status: OrderStatus | string;
+  statusCode?: OrderStatus | number;
   totalAmount?: number;
   subtotal?: number;
   shippingFee?: number;
@@ -136,15 +172,20 @@ export interface ToastMessage {
 export interface Address {
   id: string;
   title: string; // e.g. "Main Pharmacy Branch", "Warehouse Hub"
-  recipientName: string;
-  phoneNumber: string;
+  recipientName?: string;
+  phoneNumber?: string;
+  cityId?: number;
   cityName: string;
+  areaId?: number;
   areaName: string;
   streetAddress: string;
   buildingNumber?: string;
   floor?: string;
+  apartment?: string;
   landmark?: string;
   deliveryInstructions?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   isDefault: boolean;
 }
 

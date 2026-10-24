@@ -6,6 +6,7 @@ import type {
   UpdateCartQuantityRequestDto,
   RemoveFromCartRequestDto
 } from '@/types';
+import { ceilPrice } from '@/utils/price';
 
 export interface BackendCartItemDto {
   id: number | string;
@@ -27,6 +28,7 @@ export interface BackendCartItemDto {
     purchasePrice?: number;
     salesPrice?: number;
     effectiveSalesPrice?: number;
+    priceBeforeFlashSale?: number;
     stockQuantity?: number;
     maxQuantity?: number;
   };
@@ -75,23 +77,25 @@ export interface RemoveFromCartPayload {
 export function mapBackendCartItem(item: BackendCartItemDto): CartItem {
   const prod = item.product;
   const price = item.productPrice;
-  const effectivePrice = price?.effectiveSalesPrice ?? price?.salesPrice ?? 25;
-  const originalPrice = price?.purchasePrice ?? (effectivePrice ? +(effectivePrice * 1.15).toFixed(2) : 30);
+  const rawEffective = price?.effectiveSalesPrice ?? price?.salesPrice ?? 0;
+  const effectivePrice = ceilPrice(rawEffective);
+  // purchasePrice is the warehouse cost, not the customer-facing pre-discount price.
+  const rawOriginal = price?.priceBeforeFlashSale ?? price?.salesPrice ?? rawEffective;
+  const originalPrice = ceilPrice(rawOriginal);
 
   const productObj: Product = {
     id: item.productId,
-    name: prod?.name || 'Pharmaceutical Item',
+    name: prod?.name || '',
     arabicName: prod?.arabicName?.trim() || undefined,
-    strength: prod?.preef || 'Standard Dosage',
-    form: 'Tablet',
-    packSize: prod?.preef || 'Box',
+    strength: prod?.preef || '',
+    form: '',
+    packSize: prod?.preef || '',
     price: effectivePrice,
     originalPrice,
     discountRate: originalPrice > effectivePrice ? Math.round(((originalPrice - effectivePrice) / originalPrice) * 100) : 0,
     image: getImageUrl(prod?.productImage),
-    inStock: (price?.stockQuantity ?? 1) > 0,
-    stockQuantity: price?.stockQuantity ?? 50,
-    minOrder: 1,
+    inStock: (price?.stockQuantity ?? 0) > 0,
+    stockQuantity: price?.stockQuantity ?? 0,
     description: prod?.description || ''
   };
 
@@ -101,12 +105,16 @@ export function mapBackendCartItem(item: BackendCartItemDto): CartItem {
     product: productObj,
     priceId: item.productPriceId,
     inventoryId: item.inventoryUserId,
-    inventoryName: item.inventoryUser?.bussinesName?.trim() || item.inventoryUser?.userName || 'Authorized Distributor',
+    inventoryName: item.inventoryUser?.bussinesName?.trim() || item.inventoryUser?.userName || '',
     quantity: item.quantity,
     effectivePrice,
-    originalPrice,
-    minOrder: item.inventoryUser?.minOrder || 800
+    originalPrice
   };
+}
+
+export function isValidGuid(val?: string | null): boolean {
+  if (!val) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
 }
 
 export const cartService = {
@@ -114,7 +122,9 @@ export const cartService = {
    * GET /api/Carts/{userId}
    */
   async getCart(userId: string): Promise<CartItem[]> {
-    const res = await apiClient.get<BackendCartDto>(`/api/Carts/${userId}`);
+    const res = await apiClient.get<BackendCartDto>(`/api/Carts/${encodeURIComponent(userId)}`, {
+      headers: { 'X-Silent-Loading': 'true' }
+    });
     if (res.data && Array.isArray(res.data.items)) {
       return res.data.items.map(mapBackendCartItem);
     }
@@ -126,13 +136,20 @@ export const cartService = {
    * Matches Swagger AddToCartRequestDto: { userId, inventoryId, productId, quantity }
    */
   async addToCart(payload: AddToCartPayload) {
+    const rawInv = payload.inventoryId || payload.productPriceId || '';
+    if (!isValidGuid(rawInv)) {
+      console.warn('[cartService.addToCart] Aborted: inventoryId must be a valid Guid. Received:', rawInv);
+      return null;
+    }
     const body: AddToCartRequestDto = {
       userId: payload.userId,
-      inventoryId: payload.inventoryId || payload.productPriceId || '',
+      inventoryId: rawInv,
       productId: payload.productId,
       quantity: payload.quantity
     };
-    const res = await apiClient.post('/api/Carts/AddToCart', body);
+    const res = await apiClient.post('/api/Carts/AddToCart', body, {
+      headers: { 'X-Silent-Loading': 'true' }
+    });
     return res.data;
   },
 
@@ -141,13 +158,20 @@ export const cartService = {
    * Matches Swagger UpdateCartQuantityRequestDto: { userId, productId, inventoryId, quantity }
    */
   async updateCartQuantity(payload: UpdateCartQuantityPayload) {
+    const rawInv = payload.inventoryId || '';
+    if (!isValidGuid(rawInv)) {
+      console.warn('[cartService.updateCartQuantity] Aborted: inventoryId must be a valid Guid. Received:', rawInv);
+      return null;
+    }
     const body: UpdateCartQuantityRequestDto = {
       userId: payload.userId,
       productId: payload.productId || String(payload.cartItemId || ''),
-      inventoryId: payload.inventoryId || '',
+      inventoryId: rawInv,
       quantity: payload.quantity
     };
-    const res = await apiClient.put('/api/Carts/UpdateCartQuantity', body);
+    const res = await apiClient.put('/api/Carts/UpdateCartQuantity', body, {
+      headers: { 'X-Silent-Loading': 'true' }
+    });
     return res.data;
   },
 
@@ -160,7 +184,9 @@ export const cartService = {
       userId: payload.userId,
       productId: payload.productId || String(payload.cartItemId || '')
     };
-    const res = await apiClient.post('/api/Carts/RemoveFromCart', body);
+    const res = await apiClient.post('/api/Carts/RemoveFromCart', body, {
+      headers: { 'X-Silent-Loading': 'true' }
+    });
     return res.data;
   }
 };

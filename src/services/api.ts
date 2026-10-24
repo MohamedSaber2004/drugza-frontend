@@ -24,12 +24,6 @@ import { invoicesService } from './invoices.service';
 import { API_BASE_URL, getImageUrl, apiClient } from './client';
 export { API_BASE_URL, getImageUrl, apiClient };
 
-// Empty placeholder structures for backward compatibility without mock data
-export const MOCK_CATEGORIES: Category[] = [];
-export const MOCK_SUPPLIERS: Supplier[] = [];
-export const MOCK_PRODUCTS: Product[] = [];
-export const MOCK_PRODUCT_SUPPLIER_PRICES: Record<string, ProductSupplierPrice[]> = {};
-
 /**
  * DrugzaService - Unified adapter delegating to modular services
  */
@@ -57,30 +51,13 @@ export const DrugzaService = {
   },
 
   async getSuppliersByCategory(categoryId: string): Promise<Supplier[]> {
-    const list = await categoriesService.getInventoriesByCategory(categoryId);
-    if (Array.isArray(list) && list.length > 0) {
-      return list.map((p: any, idx: number) => ({
-        id: p.id,
-        businessName: p.bussinesName || p.userName || 'Distributor',
-        arabicName: p.arabicName?.trim() || undefined,
-        email: p.email || 'distributor@drugza.com',
-        profileImage: getImageUrl(p.profileImage),
-        isAvailableNow: true,
-        minOrder: p.minOrder || 800,
-        rating: 4.9,
-        deliverySpeed: 'Same Day',
-        location: 'Cairo Logistics Hub',
-        itemsCount: 500 + idx * 50
-      }));
-    }
-    return providersService.getProviders();
+    const list = await categoriesService.getCategoryProviders(categoryId);
+    return list.length > 0 ? list : providersService.getProviders();
   },
 
   // Products
   async getProducts(params?: { lang?: number; search?: string; page?: number; size?: number }): Promise<Product[]> {
-    const prods = await productsService.getProducts(params);
-    if (prods.length > 0) return prods;
-    return productsService.getPopularProducts();
+    return productsService.getProducts(params);
   },
 
   async getProductById(id: string): Promise<Product | null> {
@@ -160,7 +137,7 @@ export const DrugzaService = {
     return bannersService.getSpecialOffers();
   },
 
-  async getHomeProduct() {
-    return homeService.getHomeProduct();
+  async getHome() {
+    return homeService.getHome();
   }
 };

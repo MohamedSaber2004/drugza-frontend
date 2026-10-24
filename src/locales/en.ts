@@ -2,7 +2,6 @@ export default {
   // Top utility bar
   topBar: {
     medicalNotice: 'Licensed Medical Distribution: Temperature-monitored pharmaceutical logistics serving verified Egyptian pharmacies.',
-    hotline: 'Hotline: 19890',
     deliveryDays: 'Delivery 7 Days / Week',
     switchLanguage: 'العربية'
   },
@@ -77,7 +76,8 @@ export default {
     title: 'Top Medical Categories',
     subtitle: 'Click any category to see all authorized distributors supplying those formulations.',
     viewAllCategories: 'Explore Entire Catalog',
-    itemsCount: '{count} Products'
+    itemsCount: '{count} Products',
+    browseCategory: 'Browse Category'
   },
 
   // Products
@@ -122,6 +122,9 @@ export default {
     searchPlaceholder: 'Name or active ingredient...',
     categoriesTitle: 'Categories',
     allCategories: 'All Categories',
+    providersTitle: 'Suppliers & Warehouses',
+    allProviders: 'All Authorized Warehouses',
+    activeFilters: 'Active Filters:',
     availabilityTitle: 'Availability',
     inStockOnly: 'In Stock Only',
     flashSalesOnly: 'Flash Sale Deals Only',
@@ -167,7 +170,9 @@ export default {
     hours: 'Dispatch Hours: 24/7 Temperature Monitored',
     productsHeading: 'Inventory Available from this Distributor',
     productsDesc: 'Order directly from this warehouse to consolidate minimum orders and save on logistics.',
-    noProductsFound: 'No products currently listed from this distributor.'
+    noProductsFound: 'No products currently listed from this distributor.',
+    showAllCategories: 'Show all categories ({count})',
+    showLessCategories: 'Show less'
   },
 
   // Favorites Page
@@ -184,7 +189,7 @@ export default {
   ordersPage: {
     eyebrow: 'Procurement History',
     heading: 'Wholesale Order Records',
-    subtitle: 'Track live dispatch statuses, cold-chain temperature logs, and official tax invoices.',
+    subtitle: 'Review and manage your wholesale orders, item details, and official tax invoices.',
     emptyTitle: 'No orders recorded yet',
     emptyDesc: 'Your submitted wholesale dispatches and shipment updates will appear here.',
     browseProducts: 'Start Procurement',
@@ -192,7 +197,13 @@ export default {
     date: 'Date: {date}',
     total: 'Total Amount: {amount} EGP',
     status: 'Status: {status}',
-    viewDetails: 'View Order Details'
+    viewDetails: 'View Order Details',
+    orderStatus: 'Order Status',
+    itemStatus: 'Item Status',
+    itemsTitle: 'Order Items & Details',
+    itemsCountLabel: '{count} items',
+    viewItems: 'View Items',
+    hideItems: 'Hide Items'
   },
 
   // Cart Drawer
@@ -204,15 +215,12 @@ export default {
     startShopping: 'Start Shopping',
     browseMedicines: 'Browse Catalog',
     supplierLabel: 'Supplier Warehouse',
-    minOrderLabel: 'Min: EGP {amount}',
-    minOrderAlert: 'Add EGP {amount} more to reach this warehouse\'s minimum order.',
     subtotal: 'Order Subtotal',
     coldChainFee: 'GDP Cold-Chain Logistics Fee',
     free: 'FREE',
     total: 'Estimated Total',
     checkout: 'Proceed to Checkout',
-    clear: 'Clear Cart',
-    minOrderFootnote: '* Please satisfy all warehouse minimum order limits before placing this order.'
+    clear: 'Clear Cart'
   },
 
   // Search Modal
@@ -234,10 +242,12 @@ export default {
     strength: 'Strength',
     packSpecification: 'Pack Specification',
     brandManufacturer: 'Brand / Manufacturer',
+    brand: 'Brand',
+    manufacturer: 'Manufacturer',
+    route: 'Route',
     wholesalePricesStartingAt: 'Wholesale Prices starting at:',
     verifiedAuthenticBatch: 'Verified Authentic Batch',
     suppliersTab: 'Suppliers & Warehouses',
-    overviewTab: 'Clinical Overview',
     alternativesTab: 'Generic Substitutes',
     supplierCol: 'Distributor Warehouse',
     stockCol: 'Available Stock',
@@ -246,7 +256,6 @@ export default {
     actionCol: 'Action',
     addToDispatch: 'Add to Dispatch',
     units: 'Units',
-    indicationsTitle: 'Therapeutic Indications',
     storageTitle: 'Storage & Cold-Chain Protocol',
     edaTitle: 'Regulatory Compliance'
   },
@@ -269,31 +278,14 @@ export default {
     wideSelection: 'Wide selection of 4,000+ certified medicines',
     sameDayColdChain: 'Same-day GDP cold-chain delivery',
 
-    registerTitle: 'Register Your Pharmacy',
-    registerSubtitle: 'Fill in your pharmacy & commercial license details to get started',
-    growBusiness: 'Grow Your Pharmacy Business With Drugza',
-    growBusinessSub: 'Join Egypt\'s most transparent pharmaceutical marketplace. Unlock direct distributor wholesale prices, tiered volume discounts, and reliable cold-chain delivery.',
-    factoryPricing: 'Competitive Factory Pricing',
-    verifiedDistributors: 'Verified EDA Distributors',
-    automatedInvoicing: 'Automated Invoicing & Accounting',
-    pharmacyName: 'Business / Pharmacy Name *',
-    doctorName: 'Full Name / Responsible Person *',
-    email: 'Official Email Address *',
-    phone: 'Phone / WhatsApp Number *',
-    role: 'Account Type / Role *',
-    selectRole: 'Select Account Role',
-    minOrder: 'Minimum Order (EGP)',
-    salary: 'Salary / Income',
-    country: 'Country *',
-    city: 'City *',
-    area: 'Area / District *',
-    addressLines: 'Detailed Physical Address (Building, Street, Floor) *',
-    confirmPassword: 'Confirm Password *',
-    attachLicense: 'Profile Image or Business Logo (Profile Image)',
-    clickToUpload: 'Click to upload profile photo or logo (JPG, PNG, WebP)',
-    uploadHint: 'Maximum file size: 5 MB',
-    termsAccept: 'I agree to the Terms of Pharmaceutical Service and Drugza Policies.',
-    submitRegister: 'Complete Registration',
+    registerTitle: 'Create Account',
+    registerSubtitle: 'Join Drugza and start shopping for trusted pharmacy products',
+    pharmacyName: 'Pharmacy Name',
+    doctorName: 'Full Name',
+    email: 'Email',
+    phone: 'Phone Number',
+    confirmPassword: 'Confirm Password',
+    submitRegister: 'Create Account',
     haveAccountPrompt: 'Already registered with Drugza?',
     signInLink: 'Log In',
 
@@ -375,14 +367,33 @@ export default {
     addBtn: 'Add Delivery Branch',
     primaryBadge: 'Primary Dispatch',
     setAsDefault: 'Set as Default',
+    edit: 'Edit',
     delete: 'Delete',
     addNewTitle: 'Add New Delivery Address',
+    editTitle: 'Edit Delivery Branch Address',
     branchTitle: 'Branch / Hub Title',
     recipientName: 'Receiving Pharmacist Name',
-    streetAddress: 'Street Address & Floor',
+    streetAddress: 'Street Address',
     instructions: 'Delivery Instructions (Cold-chain intake, gate, etc.)',
     saveBtn: 'Save Delivery Address',
-    cancelBtn: 'Cancel'
+    cancelBtn: 'Cancel',
+    deleteConfirm: 'Are you sure you want to delete this address?',
+    deleteWarning: 'This branch address will be permanently removed from your pharmacy account.',
+    confirmDeleteBtn: 'Yes, Delete Address',
+    loading: 'Loading delivery locations...',
+    saving: 'Saving...',
+    deleting: 'Deleting...',
+    emptyTitle: 'No Delivery Locations Registered',
+    emptyDesc: 'Register your community dispensary address to enable fast, GPS-routed pharmaceutical drops.',
+    viewOnMap: 'View on Map',
+    detectLocation: 'Detect Current Location (GPS)',
+    detectingLocation: 'Detecting coordinates...',
+    locationDetected: 'Coordinates detected successfully',
+    locationPermissionDenied: 'Please allow location permission in your browser',
+    locationNotSupported: 'Geolocation is not supported by your browser',
+    previewOnMap: 'Preview in Google Maps',
+    clearLocation: 'Remove Coordinates',
+    coordinatesLabel: 'GPS Coordinates'
   },
 
   // AI Assistant (CodeCraft)
@@ -420,13 +431,9 @@ export default {
     marketplaceNav: 'Marketplace Navigation',
     medicalCategories: 'Medical Categories',
     directContact: 'Direct Contact & Support',
-    hotlineLabel: '24/7 PHARMACY HOTLINE',
-    hotlineNumber: '19890',
-    whatsappLabel: 'OFFICIAL WHATSAPP ORDER DESK',
-    whatsappNumber: '+20 102 345 6789',
     emailLabel: 'INQUIRIES & TENDERS EMAIL',
     emailAddress: 'support@drugza.com',
-    location: 'Smart Village, Building B12, Giza, Cairo, Egypt',
+    location: 'Cairo, Egypt',
     fleet: 'Cold-Chain Fleet Operating 24/7 Non-Stop',
     copyright: '© 2026 Drugza Inc. All rights reserved. Licensed Medical Marketplace Platform.',
     terms: 'Terms & Conditions',
