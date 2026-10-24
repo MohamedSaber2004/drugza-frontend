@@ -672,6 +672,7 @@ async function handleConfirmDelete() {
     <!-- Unified Add / Edit Address Modal -->
     <div v-if="isModalOpen" class="modal-backdrop" @click.self="isModalOpen = false">
       <div class="modal-card">
+        <div class="sheet-drag-handle" aria-hidden="true"></div>
         <div class="modal-header">
           <div>
             <h3 class="modal-title">{{ modalMode === 'edit' ? t('addresses.editTitle') : t('addresses.addNewTitle') }}</h3>
@@ -1497,6 +1498,8 @@ async function handleConfirmDelete() {
   justify-content: center;
   padding: var(--space-md);
   animation: fadeIn 0.2s ease-out;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-card {
@@ -1504,12 +1507,17 @@ async function handleConfirmDelete() {
   border-radius: var(--radius-2xl);
   width: 100%;
   max-width: 620px;
-  max-height: 90vh;
+  max-height: min(90vh, 90dvh);
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow: var(--shadow-xl);
   padding: var(--space-xl);
   box-sizing: border-box;
+  position: relative;
+}
+
+.sheet-drag-handle {
+  display: none;
 }
 
 /* Custom Sleek Scrollbar */
@@ -1593,6 +1601,13 @@ async function handleConfirmDelete() {
 .form-row.three-cols {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.form-row.four-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
   gap: var(--space-md);
   width: 100%;
 }
@@ -1957,10 +1972,55 @@ async function handleConfirmDelete() {
 }
 
 @media (max-width: 640px) {
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end; /* Mobile Bottom Sheet to prevent top clipping */
+  }
+
   .modal-card {
-    padding: var(--space-lg) var(--space-md);
-    border-radius: var(--radius-xl);
-    max-height: 94vh;
+    padding: var(--space-md) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 16px));
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    max-height: 88dvh;
+    max-height: 88vh;
+    width: 100%;
+    margin: 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .modal-card.modal-card-sm {
+    border-radius: var(--radius-2xl);
+    margin: auto 12px 24px;
+    width: calc(100% - 24px);
+  }
+
+  .sheet-drag-handle {
+    display: block;
+    width: 44px;
+    height: 5px;
+    background: var(--color-border);
+    border-radius: 999px;
+    margin: -4px auto 14px;
+    opacity: 0.9;
+  }
+
+  .modal-header {
+    position: sticky;
+    top: -16px;
+    background: #FFFFFF;
+    z-index: 20;
+    padding-top: 4px;
+    padding-bottom: 10px;
+    margin-top: -4px;
+    margin-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .modal-title {
+    font-size: 1.15rem;
+  }
+
+  .modal-sub {
+    font-size: 0.75rem;
   }
 
   .form-row.two-cols {
@@ -1976,32 +2036,68 @@ async function handleConfirmDelete() {
   .form-row.three-cols .form-group:last-child {
     grid-column: 1 / -1;
   }
-}
 
-@media (max-width: 440px) {
-  .modal-header {
-    margin-bottom: var(--space-md);
+  /* 4-columns layout on mobile: 2x2 grid with Landmark taking full width */
+  .form-row.four-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
   }
 
-  .modal-title {
-    font-size: 1.125rem;
-  }
-
-  .form-row.three-cols {
-    grid-template-columns: 1fr;
-  }
-
-  .form-row.three-cols .form-group:last-child {
-    grid-column: auto;
+  .form-row.four-cols .form-group:last-child {
+    grid-column: 1 / -1;
   }
 
   .modal-footer {
     flex-direction: column-reverse;
     gap: 8px;
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
   }
 
   .modal-footer :deep(.drugza-btn) {
     width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 440px) {
+  .modal-card {
+    max-height: 90dvh;
+    padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 16px));
+  }
+
+  .modal-header {
+    margin-bottom: 10px;
+  }
+
+  .modal-title {
+    font-size: 1.05rem;
+  }
+
+  .form-row.four-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .form-row.four-cols .form-group:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .modal-input {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+  }
+
+  .gps-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .detect-gps-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 12px;
   }
 }
 
