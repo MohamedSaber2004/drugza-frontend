@@ -30,6 +30,7 @@ import { useCart } from '@/composables/useCart';
 import { useFavorites } from '@/composables/useFavorites';
 import { useToast } from '@/composables/useToast';
 import { useI18n } from '@/composables/useI18n';
+import { setSeo } from '@/utils/seo';
 import { onImageError } from '@/utils/placeholders';
 import { formatPrice, ceilPrice } from '@/utils/price';
 import { encryptId, decryptId } from '@/utils/id-crypto';
@@ -129,8 +130,9 @@ async function loadProductDetails() {
       }
     }
 
-    // Load alternatives based on active ingredient or category
     if (product.value) {
+      applyProductSeo();
+      // Load alternatives based on active ingredient or category
       loadAlternatives(product.value);
     }
   } catch (err) {
@@ -153,6 +155,51 @@ async function loadAlternatives(prod: Product) {
     isLoadingAlternatives.value = false;
   }
 }
+
+function applyProductSeo() {
+  const p = product.value;
+  if (!p) return;
+
+  const isArabic = locale.value === 'ar';
+  const name = (isArabic && p.arabicName ? p.arabicName : p.name) || p.name;
+  const localizedDescription = (isArabic ? p.arabicDescription : p.description)?.trim() || '';
+  const description =
+    localizedDescription ||
+    (isArabic
+      ? `${name} — قارن أسعار الموزعين والمخزون المتاح على دراجزا.`
+      : `${name} — compare live supplier prices and stock on Drugza.`);
+  const price = bestPrice.value || p.price;
+
+  setSeo({
+    title: name,
+    description: description.slice(0, 300),
+    path: route.path,
+    image: p.image,
+    type: 'product',
+    jsonLd: {
+      '@type': 'Product',
+      name,
+      image: [p.image],
+      description: description.slice(0, 500),
+      sku: p.productCode ? String(p.productCode) : p.id,
+      ...(p.brandName ? { brand: { '@type': 'Brand', name: p.brandName } } : {}),
+      ...(p.categoryName ? { category: p.categoryName } : {}),
+      offers: {
+        '@type': 'Offer',
+        url: `${window.location.origin}${route.path}`,
+        priceCurrency: 'EGP',
+        price,
+        availability:
+          totalStock.value > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        seller: { '@type': 'Organization', name: 'Drugza' }
+      }
+    }
+  });
+}
+
+watch(locale, () => {
+  if (product.value) applyProductSeo();
+});
 
 function updateQty(id: string, delta: number) {
   const current = quantities.value[id] || 1;

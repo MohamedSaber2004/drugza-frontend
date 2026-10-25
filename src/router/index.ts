@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/views/HomeView.vue';
 import { loadingService, type SkeletonType } from '@/composables/useLoading';
 import { encryptId, decryptId } from '@/utils/id-crypto';
+import { applyRouteSeo } from './seo';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -201,8 +202,9 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
-router.afterEach(() => {
+router.afterEach((to) => {
   loadingService.finishPageLoading();
+  applyRouteSeo(to);
 });
 
 router.onError(() => {

@@ -16,6 +16,7 @@ import Pagination from '@/components/ui/Pagination.vue';
 import { useI18n } from '@/composables/useI18n';
 import { onImageError } from '@/utils/placeholders';
 import { encryptId, decryptId } from '@/utils/id-crypto';
+import { setSeo } from '@/utils/seo';
 
 const route = useRoute();
 const router = useRouter();
@@ -47,6 +48,36 @@ watch(
   }
 );
 
+function applyCategorySeo() {
+  const cat = category.value;
+  if (!cat) return;
+
+  const isArabic = locale.value === 'ar';
+  const name = (isArabic && cat.arabicName ? cat.arabicName : cat.name) || cat.name;
+  const description =
+    cat.description?.trim() ||
+    (isArabic
+      ? `تصفح منتجات فئة ${name} وقارن بين الموزعين المعتمدين والأسعار المحدثة على دراجزا.`
+      : `Browse ${name} products and compare verified distributors and live prices on Drugza.`);
+
+  setSeo({
+    title: isArabic ? `${name} — أدوية وموزعون معتمدون` : `${name} — Medicines & Verified Providers`,
+    description,
+    path: route.path,
+    image: cat.imageName,
+    jsonLd: {
+      '@type': 'CollectionPage',
+      name,
+      description,
+      url: `${window.location.origin}${route.path}`
+    }
+  });
+}
+
+watch(locale, () => {
+  if (category.value) applyCategorySeo();
+});
+
 async function loadData() {
   isLoading.value = true;
   try {
@@ -61,6 +92,7 @@ async function loadData() {
     if (sups.status === 'fulfilled') {
       suppliers.value = sups.value;
     }
+    applyCategorySeo();
   } catch {
     //
   } finally {

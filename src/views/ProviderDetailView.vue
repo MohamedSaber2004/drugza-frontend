@@ -22,6 +22,7 @@ import Pagination from '@/components/ui/Pagination.vue';
 import { useI18n } from '@/composables/useI18n';
 import { onImageError } from '@/utils/placeholders';
 import { encryptId, decryptId } from '@/utils/id-crypto';
+import { setSeo } from '@/utils/seo';
 
 const route = useRoute();
 const router = useRouter();
@@ -77,6 +78,35 @@ watch(
   }
 );
 
+function applyProviderSeo() {
+  const p = provider.value;
+  if (!p) return;
+
+  const isArabic = locale.value === 'ar';
+  const name = (isArabic && p.arabicName ? p.arabicName : p.businessName) || p.businessName;
+  const description = isArabic
+    ? `تصفح منتجات وأسعار ${name} من موزع معتمد على دراجزا، مع المخزون المحدث والتوصيل بسلسلة تبريد.`
+    : `Browse products and live wholesale prices from ${name}, a verified distributor on Drugza, with real-time stock and cold-chain delivery.`;
+
+  setSeo({
+    title: name,
+    description,
+    path: route.path,
+    image: p.profileImage,
+    jsonLd: {
+      '@type': 'Organization',
+      name,
+      url: `${window.location.origin}${route.path}`,
+      ...(p.profileImage ? { logo: p.profileImage } : {}),
+      description
+    }
+  });
+}
+
+watch(locale, () => {
+  if (provider.value) applyProviderSeo();
+});
+
 async function loadData() {
   const requestId = ++latestRequestId;
   isLoading.value = true;
@@ -92,6 +122,7 @@ async function loadData() {
     if (requestId !== latestRequestId) return;
     if (prov.status === 'fulfilled') provider.value = prov.value;
     if (cats.status === 'fulfilled') availableCategories.value = cats.value;
+    applyProviderSeo();
     const providerName = provider.value?.businessName?.trim();
     products.value = prods.status === 'fulfilled'
       ? prods.value.map(p => ({

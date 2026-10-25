@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import MainHeader from '@/components/layout/MainHeader.vue';
 import MainFooter from '@/components/layout/MainFooter.vue';
@@ -10,6 +10,8 @@ import GlobalProgressBar from '@/components/ui/GlobalProgressBar.vue';
 import PageSkeleton from '@/components/ui/PageSkeleton.vue';
 import { useLoading } from '@/composables/useLoading';
 import { useCart } from '@/composables/useCart';
+import { useI18n } from '@/composables/useI18n';
+import { applyRouteSeo } from '@/router/seo';
 import type { Product } from '@/types';
 
 const router = useRouter();
@@ -17,6 +19,9 @@ const route = useRoute();
 const isSearchOpen = ref(false);
 const { isSkeletonVisible, pageSkeletonType } = useLoading();
 const { hydrateCart } = useCart();
+const { locale } = useI18n();
+
+watch(locale, () => applyRouteSeo(route));
 
 const isAuthRoute = computed(() => {
   return (
