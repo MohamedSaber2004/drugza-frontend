@@ -261,10 +261,6 @@ function goToCheckout() {
             </span>
             <strong class="green-text">{{ formatPrice(totalSavings) }} {{ t('common.currency') }}</strong>
           </div>
-          <div class="sum-row">
-            <span>{{ t('cart.coldChainFee') }}</span>
-            <span class="shipping-tag">{{ t('cart.calculatedAtCheckout') }}</span>
-          </div>
           <div class="sum-row total-row">
             <span>{{ t('cart.total') }}</span>
             <PriceDisplay :price="totalCartAmount" size="lg" />
@@ -698,12 +694,6 @@ function goToCheckout() {
   font-size: 11px;
   font-weight: 400;
   color: var(--color-text-muted);
-}
-
-.shipping-tag {
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-blue);
 }
 
 .total-row {
