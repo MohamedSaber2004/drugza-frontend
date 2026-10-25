@@ -78,18 +78,24 @@ export const categoriesService = {
     return cachedRequest(
       `category_by_id_${id}_${lang}`,
       async () => {
-        const res = await apiClient.get<BackendCategoryDto>(`/api/Categories/${id}`, {
-          params: { lang }
-        });
-        if (!res.data) return null;
-        const c = res.data;
-        return {
-          id: c.id,
-          name: c.name,
-          arabicName: c.arabicName?.trim() || undefined,
-          description: c.description || c.pref || '',
-          imageName: getImageUrl(c.imageName, 'category')
-        };
+        try {
+          const res = await apiClient.get<BackendCategoryDto>(`/api/Categories/${id}`, {
+            params: { lang }
+          });
+          if (!res.data) return null;
+          const c = res.data;
+          return {
+            id: c.id,
+            name: c.name,
+            arabicName: c.arabicName?.trim() || undefined,
+            description: c.description || c.pref || '',
+            imageName: getImageUrl(c.imageName, 'category')
+          };
+        } catch {
+          // Orphan/stale category ids return 400; fall back to the full category list.
+          const all = await categoriesService.getCategories(lang).catch(() => []);
+          return all.find((c) => c.id.toLowerCase() === id.toLowerCase()) ?? null;
+        }
       },
       { ttlMs: 5 * 60 * 1000, force }
     );

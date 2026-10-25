@@ -130,7 +130,9 @@ export default {
     "heading": "Authorized Distributors Supplying",
     "subtitle": "Browse accredited distributors with active inventory and guaranteed cold-chain logistics for this therapeutic category.",
     "providersCount": "{count} Distributors available with inventory",
-    "exploreProducts": "Explore Products"
+    "exploreProducts": "Explore Products",
+    "emptyTitle": "No distributors listed for this category yet",
+    "emptyText": "Verified distributors have not published inventory for this category yet. Browse all categories to find available stock."
   },
   "providersPage": {
     "eyebrow": "Accredited Warehouses",

@@ -35,6 +35,12 @@ const paginatedSuppliers = computed(() => {
   return suppliers.value.slice(start, start + pageSize);
 });
 
+const categoryName = computed(() => {
+  const cat = category.value;
+  if (!cat) return t('nav.categories');
+  return (locale.value === 'ar' && cat.arabicName ? cat.arabicName : cat.name) || cat.name || t('nav.categories');
+});
+
 onMounted(() => {
   loadData();
 });
@@ -114,7 +120,7 @@ function handleSelectSupplier(supplier: Supplier) {
         <ChevronRight :size="14" class="arrow-icon" />
         <router-link to="/categories">{{ t('nav.categories') }}</router-link>
         <ChevronRight :size="14" class="arrow-icon" />
-        <span class="current">{{ locale === 'ar' && category?.arabicName ? category.arabicName : (category?.name || t('nav.categories')) }}</span>
+        <span class="current">{{ categoryName }}</span>
       </nav>
 
       <!-- Category Hero Header Banner -->
@@ -150,7 +156,7 @@ function handleSelectSupplier(supplier: Supplier) {
           <div>
             <span class="sub-label">{{ t('providers.badge') }}</span>
             <h2 class="section-title">
-              {{ t('categoryProvidersPage.heading') }} {{ locale === 'ar' && category?.arabicName ? category.arabicName : category?.name }}
+              {{ t('categoryProvidersPage.heading') }} {{ categoryName }}
             </h2>
             <p class="section-subtitle">
               {{ t('categoryProvidersPage.subtitle') }}
@@ -229,6 +235,18 @@ function handleSelectSupplier(supplier: Supplier) {
           :page-size="pageSize"
           :item-label="t('nav.distributors')"
         />
+
+        <!-- Empty state: no providers, or a stale category id -->
+        <div v-if="!isLoading && suppliers.length === 0" class="empty-state">
+          <div class="empty-icon">
+            <Building2 :size="30" />
+          </div>
+          <h3 class="empty-title">{{ t('categoryProvidersPage.emptyTitle') }}</h3>
+          <p class="empty-text">{{ t('categoryProvidersPage.emptyText') }}</p>
+          <router-link to="/categories" class="empty-cta">
+            {{ t('categoryProvidersPage.backToCategories') }}
+          </router-link>
+        </div>
       </section>
     </div>
   </div>
@@ -535,5 +553,58 @@ function handleSelectSupplier(supplier: Supplier) {
 
 .browse-sup-btn {
   margin-top: auto;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-xs);
+  background: #FFFFFF;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl) var(--space-lg);
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-pill);
+  background: var(--color-pale-blue);
+  color: var(--color-primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-xs);
+}
+
+.empty-title {
+  font-size: 1.125rem;
+  color: var(--color-deep-blue);
+}
+
+.empty-text {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  max-width: 460px;
+  line-height: 1.6;
+}
+
+.empty-cta {
+  margin-top: var(--space-sm);
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-blue);
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.empty-cta:hover {
+  background: var(--color-deep-blue);
 }
 </style>

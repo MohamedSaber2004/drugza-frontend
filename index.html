@@ -28,6 +28,52 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://drugzaapi.runasp.net">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Structured data: brand/organization + site search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://drugza-frontend-store.vercel.app/#organization",
+          "name": "Drugza",
+          "alternateName": "دراجزا",
+          "url": "https://drugza-frontend-store.vercel.app/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://drugza-frontend-store.vercel.app/images/drugza-logo.jpg"
+          },
+          "description": "Drugza is an Egyptian B2B pharmacy marketplace connecting pharmacies with EDA-licensed distributors, live wholesale prices, and cold-chain delivery.",
+          "areaServed": {
+            "@type": "Country",
+            "name": "Egypt"
+          },
+          "sameAs": [
+            "https://play.google.com/store/apps/details?id=com.app.drugza",
+            "https://www.facebook.com/DrugZA",
+            "https://www.tiktok.com/@drugza.eg"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://drugza-frontend-store.vercel.app/#website",
+          "url": "https://drugza-frontend-store.vercel.app/",
+          "name": "Drugza",
+          "alternateName": "دراجزا",
+          "inLanguage": ["en", "ar"],
+          "publisher": { "@id": "https://drugza-frontend-store.vercel.app/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://drugza-frontend-store.vercel.app/catalog?search={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="app"></div>
