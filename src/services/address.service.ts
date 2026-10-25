@@ -253,6 +253,19 @@ export const addressService = {
   },
 
   /**
+   * GET /api/AreaZone/area-zone-byAreaId/{areaId}
+   */
+  async getZonesByArea(areaId: number): Promise<Array<{ id: number; name: string }>> {
+    if (!areaId) return [];
+    try {
+      const res = await apiClient.get(`/api/AreaZone/area-zone-byAreaId/${areaId}`);
+      return Array.isArray(res.data) ? res.data : [];
+    } catch {
+      return [];
+    }
+  },
+
+  /**
    * GET /api/Zones/all-zones
    */
   async getAllZones(): Promise<Array<{ id: number; name: string }>> {

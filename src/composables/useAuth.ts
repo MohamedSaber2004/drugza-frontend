@@ -313,7 +313,7 @@ export function useAuth() {
       const successMsg =
         typeof res.data === 'string' && res.data
           ? res.data
-          : 'Registration completed. Check your email for the verification code.';
+          : 'Your account has been created successfully.';
       toast.success(successMsg, 'Registration Successful');
       return { success: true, email };
     } catch (err: any) {

@@ -266,7 +266,7 @@ export const ordersService = {
    * Note backend query param typo: 'addresssId'
    */
   async createOrder(params: {
-    addresssId: string;
+    addresssId?: string;
     deliveryDate?: number;
     orderNote?: string;
     deliveryTimeSlotId?: string;
@@ -274,7 +274,7 @@ export const ordersService = {
   }) {
     const res = await apiClient.post('/api/Orders', null, {
       params: {
-        addresssId: params.addresssId,
+        ...(params.addresssId ? { addresssId: params.addresssId } : {}),
         deliveryDate: params.deliveryDate ?? 1,
         orderNote: params.orderNote || '',
         deliveryTimeSlotId: params.deliveryTimeSlotId,

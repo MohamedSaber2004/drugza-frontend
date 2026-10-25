@@ -16,6 +16,7 @@ const emailOrPhone = ref((route.query.email as string) || '');
 const password = ref('');
 const showPassword = ref(false);
 const justVerified = route.query.verified === '1';
+const justRegistered = route.query.registered === '1';
 
 async function handleLogin() {
   const success = await login(emailOrPhone.value, password.value, true);
@@ -84,9 +85,9 @@ async function handleLogin() {
           <p class="form-subtitle">{{ t('auth.loginSubtitle') }}</p>
         </div>
 
-        <div v-if="justVerified" class="auth-success-banner" role="status">
+        <div v-if="justRegistered || justVerified" class="auth-success-banner" role="status">
           <CheckCircle2 :size="16" />
-          <span>{{ t('auth.emailVerified') }}</span>
+          <span>{{ justRegistered ? t('auth.registeredSuccess') : t('auth.emailVerified') }}</span>
         </div>
 
         <div v-if="authError" class="auth-error-banner" role="alert">

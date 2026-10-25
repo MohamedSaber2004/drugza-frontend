@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  MapPin,
   Tag,
   ShieldCheck,
   CheckCircle2,
-  Truck,
   ArrowRight,
   AlertTriangle,
-  PlusCircle,
   RefreshCw
 } from 'lucide-vue-next';
 import { useCart } from '@/composables/useCart';
@@ -18,32 +15,20 @@ import PriceDisplay from '@/components/ui/PriceDisplay.vue';
 import Button from '@/components/ui/Button.vue';
 import { useI18n } from '@/composables/useI18n';
 import { formatPrice, ceilPrice } from '@/utils/price';
-import { addressService, ordersService, couponsService } from '@/services';
+import { ordersService, couponsService } from '@/services';
 import { fetchLiveSupplierPrices } from '@/services/products.service';
-import type { Address, DeliveryTimeSlotDto } from '@/types';
+import { onImageError } from '@/utils/placeholders';
 
 const router = useRouter();
 const toast = useToast();
 const { t, locale } = useI18n();
 
-const { totalCartAmount, totalSavings, items, suppliersGroups, clearCart, applyPriceUpdates } = useCart();
+const { totalCartAmount, totalSavings, totalPiecesCount, items, suppliersGroups, clearCart, applyPriceUpdates } = useCart();
 
-const selectedAddressId = ref('');
-const selectedSlotId = ref('');
 const couponInput = ref('');
 const appliedCouponCode = ref('');
 const appliedDiscount = ref(0);
 const isPlacingOrder = ref(false);
-
-const addresses = ref<Address[]>([]);
-const isAddressesLoading = ref(true);
-const addressError = ref(false);
-const addressStepEl = ref<HTMLElement | null>(null);
-const timeSlots = ref<DeliveryTimeSlotDto[]>([]);
-
-const shippingFee = ref<number | null>(null);
-const isShippingLoading = ref(false);
-const shippingError = ref(false);
 
 type PriceCheckState = 'idle' | 'checking' | 'verified' | 'issues' | 'error';
 
@@ -73,63 +58,15 @@ const hasQuantityIssues = computed(
   () => priceIssues.value.some(i => i.kind === 'stock' || i.kind === 'unavailable')
 );
 
-const selectedAddress = computed(
-  () => addresses.value.find(a => a.id === selectedAddressId.value) || null
-);
-const selectedCityName = computed(() => selectedAddress.value?.cityName || '');
-
 const finalPayable = computed(() => {
-  return Math.max(0, totalCartAmount.value + (shippingFee.value ?? 0) - appliedDiscount.value);
+  return Math.max(0, totalCartAmount.value - appliedDiscount.value);
 });
 
-onMounted(async () => {
-  try {
-    const [addrList, slotList] = await Promise.allSettled([
-      addressService.getUserAddresses(),
-      ordersService.getDeliveryTimeSlots(1)
-    ]);
-
-    if (addrList.status === 'fulfilled') {
-      addresses.value = addrList.value;
-    }
-    if (slotList.status === 'fulfilled' && slotList.value.length > 0) {
-      timeSlots.value = slotList.value;
-      selectedSlotId.value = slotList.value[0].id;
-    }
-  } finally {
-    isAddressesLoading.value = false;
-  }
-
+onMounted(() => {
   if (items.value.length > 0) {
     void verifyPrices();
   }
 });
-
-watch(selectedAddressId, (id) => {
-  addressError.value = false;
-  void loadShippingFee(id);
-});
-
-async function loadShippingFee(addressId: string) {
-  shippingFee.value = null;
-  shippingError.value = false;
-  if (!addressId) return;
-
-  isShippingLoading.value = true;
-  try {
-    const fee = await addressService.getShippingFees(addressId);
-    if (selectedAddressId.value !== addressId) return;
-    if (fee === null) {
-      shippingError.value = true;
-    } else {
-      shippingFee.value = fee;
-    }
-  } finally {
-    if (selectedAddressId.value === addressId) {
-      isShippingLoading.value = false;
-    }
-  }
-}
 
 async function verifyPrices(): Promise<boolean> {
   if (items.value.length === 0) {
@@ -240,10 +177,6 @@ async function revalidateCoupon() {
   }
 }
 
-function goToAddresses() {
-  router.push('/addresses');
-}
-
 async function applyCoupon() {
   const code = couponInput.value.trim();
   if (!code) return;
@@ -272,18 +205,6 @@ async function handlePlaceOrder() {
     return;
   }
 
-  if (!selectedAddressId.value) {
-    addressError.value = true;
-    toast.error(t('checkout.addressRequiredError'));
-    addressStepEl.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
-  }
-
-  if (isShippingLoading.value || shippingFee.value === null) {
-    toast.error(shippingError.value ? t('checkout.shippingFailed') : t('checkout.shippingPending'));
-    return;
-  }
-
   isPlacingOrder.value = true;
   try {
     const verified = await verifyPrices();
@@ -297,8 +218,6 @@ async function handlePlaceOrder() {
     }
 
     const res = await ordersService.createOrder({
-      addresssId: selectedAddressId.value,
-      deliveryTimeSlotId: selectedSlotId.value || undefined,
       couponCode: appliedCouponCode.value || undefined
     });
 
@@ -329,148 +248,62 @@ async function handlePlaceOrder() {
       >
         <!-- Left: Form Steps -->
         <div class="checkout-steps-col">
-          <!-- Step 1: Delivery Address -->
-          <div
-            ref="addressStepEl"
-            class="step-card"
-            :class="{ 'has-error': addressError }"
-            v-loading="{ loading: isAddressesLoading, text: t('checkout.addressesLoading') }"
-          >
+          <!-- Step 1: Product Review -->
+          <div class="step-card">
             <div class="step-title-row">
               <span class="step-num">1</span>
               <div>
-                <h3 class="step-name">{{ t('checkout.step1Title') }}</h3>
-                <span class="step-hint">{{ t('checkout.step1Hint') }}</span>
+                <h3 class="step-name">{{ t('checkout.reviewItemsTitle') }}</h3>
+                <span class="step-hint">
+                  {{ t('checkout.reviewItemsHint', { count: items.length, pieces: totalPiecesCount }) }}
+                </span>
               </div>
             </div>
 
-            <div v-if="!isAddressesLoading && addresses.length === 0" class="address-empty-state">
-              <span class="empty-ico-wrap"><MapPin :size="20" /></span>
-              <div class="empty-copy">
-                <strong>{{ t('checkout.noAddressTitle') }}</strong>
-                <p>{{ t('checkout.noAddressHint') }}</p>
-              </div>
-              <Button variant="cta" size="sm" @click="goToAddresses">
-                <PlusCircle :size="15" />
-                <span>{{ t('checkout.addAddress') }}</span>
-              </Button>
-            </div>
-
-            <div v-else class="options-list">
-              <label
-                v-for="addr in addresses"
-                :key="addr.id"
-                class="address-option"
-                :class="{ 'is-selected': selectedAddressId === addr.id }"
+            <div class="review-groups">
+              <div
+                v-for="group in suppliersGroups"
+                :key="group.inventoryId"
+                class="review-group"
               >
-                <input
-                  v-model="selectedAddressId"
-                  type="radio"
-                  :value="addr.id"
-                  class="radio-dot"
-                />
-                <div class="addr-text">
-                  <div class="addr-name-row">
-                    <strong>{{ addr.title || addr.recipientName }}</strong>
-                    <span v-if="addr.isDefault" class="default-chip">{{ t('checkout.defaultChip') }}</span>
-                  </div>
-                  <p class="addr-line">{{ addr.streetAddress }}{{ addr.areaName ? ', ' + addr.areaName : '' }}{{ addr.cityName ? ', ' + addr.cityName : '' }}</p>
+                <div class="review-group-head">
+                  <span class="rg-name">{{ group.inventoryName }}</span>
+                  <span class="rg-meta">{{ t('checkout.itemsCount', { count: group.items.length }) }}</span>
                 </div>
-              </label>
 
-              <p
-                v-if="addresses.length > 0 && !selectedAddressId && !addressError"
-                class="step-hint-inline"
-              >
-                {{ t('checkout.selectAddressPrompt') }}
-              </p>
-
-              <button
-                v-if="addresses.length > 0"
-                type="button"
-                class="manage-addresses-link"
-                @click="goToAddresses"
-              >
-                <PlusCircle :size="14" />
-                <span>{{ t('checkout.manageAddresses') }}</span>
-              </button>
+                <div class="review-tiles">
+                  <article v-for="item in group.items" :key="item.id" class="review-tile">
+                    <div class="tile-img-wrap">
+                      <img
+                        :src="item.product.image"
+                        :alt="item.product.name"
+                        class="tile-img"
+                        loading="lazy"
+                        @error="onImageError($event, 'product')"
+                      />
+                    </div>
+                    <div class="tile-body">
+                      <h4 class="tile-title">
+                        {{ locale === 'ar' && item.product.arabicName ? item.product.arabicName : item.product.name }}
+                      </h4>
+                      <span class="tile-sub">
+                        {{ [item.product.strength, item.product.packSize].filter(Boolean).join(' · ') || item.product.form || t('common.unitPiece') }}
+                      </span>
+                      <div class="tile-foot">
+                        <span class="tile-qty">{{ item.quantity }} × {{ formatPrice(item.effectivePrice) }}</span>
+                        <strong class="tile-total">{{ t('common.currency') }} {{ formatPrice(item.effectivePrice * item.quantity) }}</strong>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              </div>
             </div>
-
-            <p v-if="addressError" class="step-error">
-              <AlertTriangle :size="14" />
-              <span>{{ t('checkout.addressRequiredError') }}</span>
-            </p>
           </div>
 
-          <!-- Step 2: Delivery Time Slot -->
+          <!-- Step 2: Special Instructions & Coupon -->
           <div class="step-card">
             <div class="step-title-row">
               <span class="step-num">2</span>
-              <div>
-                <h3 class="step-name">{{ t('checkout.step2Title') }}</h3>
-                <span class="step-hint">{{ t('checkout.step2Hint') }}</span>
-              </div>
-            </div>
-
-            <div class="slots-grid">
-              <label
-                v-for="slot in timeSlots"
-                :key="slot.id"
-                class="slot-card"
-                :class="{ 'is-selected': selectedSlotId === slot.id }"
-              >
-                <input
-                  v-model="selectedSlotId"
-                  type="radio"
-                  :value="slot.id"
-                  class="radio-dot"
-                />
-                <div class="slot-details">
-                  <span v-if="slot.isNow" class="slot-badge">{{ t('checkout.expressBadge') }}</span>
-                  <strong class="slot-label">{{ slot.name }}</strong>
-                  <span v-if="slot.from || slot.to" class="slot-time">{{ slot.from }} - {{ slot.to }}</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <!-- Step 3: Payment Method (Cash on Delivery only) -->
-          <div class="step-card">
-            <div class="step-title-row">
-              <span class="step-num">3</span>
-              <div>
-                <h3 class="step-name">{{ t('checkout.step3Title') }}</h3>
-                <span class="step-hint">{{ t('checkout.step3Hint') }}</span>
-              </div>
-            </div>
-
-            <div class="options-list">
-              <label class="address-option is-selected">
-                <input
-                  type="radio"
-                  checked
-                  class="radio-dot"
-                />
-                <div class="addr-text">
-                  <div class="addr-name-row">
-                    <div class="pay-title">
-                      <Truck :size="18" class="pay-ico" />
-                      <strong>{{ t('checkout.codTitle') }}</strong>
-                    </div>
-                    <span class="default-chip">{{ t('checkout.recommended') }}</span>
-                  </div>
-                  <p class="addr-line">
-                    {{ t('checkout.codDesc') }}
-                  </p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <!-- Step 4: Special Instructions & Coupon -->
-          <div class="step-card">
-            <div class="step-title-row">
-              <span class="step-num">4</span>
               <div>
                 <h3 class="step-name">{{ t('checkout.step4Title') }}</h3>
                 <span class="step-hint">{{ t('checkout.step4Hint') }}</span>
@@ -530,27 +363,6 @@ async function handlePlaceOrder() {
                 <span>{{ t('checkout.couponDiscount', { code: appliedCouponCode }) }}</span>
                 <strong>- EGP {{ formatPrice(appliedDiscount) }}</strong>
               </div>
-              <div class="calc-row">
-                <span>
-                  {{ t('checkout.coldChainLogistics') }}
-                  <span v-if="selectedCityName" class="ship-city">— {{ selectedCityName }}</span>
-                </span>
-                <span v-if="isShippingLoading" class="ship-loading">
-                  <span class="mini-spinner"></span>
-                  {{ t('checkout.shippingCalculating') }}
-                </span>
-                <span v-else-if="shippingError" class="ship-error">
-                  {{ t('checkout.shippingUnavailable') }}
-                  <button type="button" class="retry-link" @click="loadShippingFee(selectedAddressId)">
-                    {{ t('checkout.retry') }}
-                  </button>
-                </span>
-                <span v-else-if="shippingFee === null" class="ship-pending">
-                  {{ t('checkout.shippingPending') }}
-                </span>
-                <span v-else-if="shippingFee === 0" class="free-ship">{{ t('checkout.free') }}</span>
-                <strong v-else>EGP {{ formatPrice(shippingFee) }}</strong>
-              </div>
             </div>
 
             <div
@@ -608,8 +420,7 @@ async function handlePlaceOrder() {
 
             <div class="total-payable-row">
               <span class="total-label">{{ t('checkout.grandTotal') }}</span>
-              <PriceDisplay v-if="shippingFee !== null" :price="finalPayable" size="lg" />
-              <span v-else class="total-pending">{{ t('checkout.totalPending') }}</span>
+              <PriceDisplay :price="finalPayable" size="lg" />
             </div>
 
             <Button
@@ -718,6 +529,132 @@ async function handlePlaceOrder() {
   color: var(--color-text-secondary);
 }
 
+/* Product review */
+.review-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.review-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-bottom: 8px;
+}
+
+.rg-name {
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-deep-blue);
+}
+
+.rg-meta {
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+}
+
+.review-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.review-tile {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--color-off-white) 100%);
+  transition: border-color var(--dur-fast) var(--ease-smooth),
+    box-shadow var(--dur-fast) var(--ease-smooth);
+}
+
+.review-tile:hover {
+  border-color: var(--color-primary-blue);
+  box-shadow: var(--shadow-xs);
+}
+
+.tile-img-wrap {
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+}
+
+.tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tile-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tile-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+  color: var(--color-deep-blue);
+}
+
+.tile-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary);
+}
+
+.tile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.tile-qty {
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--color-pale-blue);
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-blue);
+  white-space: nowrap;
+}
+
+.tile-total {
+  font-size: 0.75rem;
+  color: var(--color-deep-blue);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .review-tiles {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Options */
 .options-list {
   display: flex;
@@ -790,57 +727,6 @@ async function handlePlaceOrder() {
 
 .pay-ico {
   color: var(--color-primary-blue);
-}
-
-/* Slots */
-.slots-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-sm);
-}
-
-@media (max-width: 768px) {
-  .slots-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.slot-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm);
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  cursor: pointer;
-  transition: all var(--dur-fast) var(--ease-smooth);
-}
-
-.slot-card.is-selected {
-  border-color: var(--color-primary-blue);
-  background: var(--color-pale-blue);
-}
-
-.slot-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.slot-badge {
-  font-size: 0.625rem;
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-}
-
-.slot-label {
-  font-size: 0.8125rem;
-  color: var(--color-deep-blue);
-}
-
-.slot-time {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
 }
 
 /* Coupon Box */

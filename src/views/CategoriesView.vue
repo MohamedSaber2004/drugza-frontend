@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { ChevronRight } from 'lucide-vue-next';
+import { ChevronRight, Search, LayoutGrid } from 'lucide-vue-next';
 import type { Category } from '@/types';
 import { categoriesService } from '@/services';
 import CategoryCard from '@/components/domain/CategoryCard.vue';
@@ -12,6 +12,7 @@ import { encryptId } from '@/utils/id-crypto';
 const router = useRouter();
 const { t } = useI18n();
 const categories = ref<Category[]>([]);
+const searchQuery = ref('');
 const currentPage = ref(1);
 const isLoading = ref(true);
 
@@ -29,10 +30,23 @@ onMounted(async () => {
   }
 });
 
+const filteredCategories = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return categories.value;
+  return categories.value.filter(cat =>
+    cat.name.toLowerCase().includes(q) ||
+    (cat.arabicName && cat.arabicName.toLowerCase().includes(q))
+  );
+});
+
+watch(searchQuery, () => {
+  currentPage.value = 1;
+});
+
 const pageSize = 12;
 const paginatedCategories = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
-  return categories.value.slice(start, start + pageSize);
+  return filteredCategories.value.slice(start, start + pageSize);
 });
 
 function handleSelectCategory(cat: Category) {
@@ -58,11 +72,30 @@ function handleSelectCategory(cat: Category) {
           <p class="page-subtitle">
             {{ t('categoriesPage.subtitle') }}
           </p>
+
+          <!-- Search Categories Input -->
+          <div class="categories-search-bar">
+            <Search :size="18" class="search-ico" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              :placeholder="t('categoriesPage.searchPlaceholder')"
+              class="search-input"
+            />
+          </div>
         </div>
       </div>
 
+      <!-- Count Header -->
+      <div class="categories-meta-bar">
+        <span class="count-pill">
+          <LayoutGrid :size="16" />
+          {{ t('categoriesPage.showingCount', { count: filteredCategories.length }) }}
+        </span>
+      </div>
+
       <!-- Categories Grid (Paginated, 12 per page) -->
-      <div v-if="categories.length > 0" class="categories-grid" v-loading="isLoading" v-reveal.children>
+      <div v-if="filteredCategories.length > 0" class="categories-grid" v-loading="isLoading" v-reveal.children>
         <CategoryCard
           v-for="cat in paginatedCategories"
           :key="cat.id"
@@ -71,11 +104,15 @@ function handleSelectCategory(cat: Category) {
         />
       </div>
 
+      <p v-else-if="!isLoading" class="categories-empty-state">
+        {{ t('categoriesPage.noResults') }}
+      </p>
+
       <!-- Pagination Component -->
       <Pagination
-        v-if="categories.length > 0"
+        v-if="filteredCategories.length > 0"
         v-model="currentPage"
-        :total-items="categories.length"
+        :total-items="filteredCategories.length"
         :page-size="pageSize"
         :item-label="t('nav.categories')"
       />
@@ -151,6 +188,80 @@ function handleSelectCategory(cat: Category) {
   color: rgba(255, 255, 255, 0.9);
   max-width: 680px;
   line-height: 1.6;
+}
+
+.categories-search-bar {
+  margin-top: var(--space-md);
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 480px;
+}
+
+.search-ico {
+  position: absolute;
+  left: 14px;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+[dir="rtl"] .search-ico {
+  left: auto;
+  right: 14px;
+}
+
+.search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px 0 42px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-deep-blue);
+  font-size: 0.875rem;
+  outline: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all var(--dur-fast) var(--ease-smooth);
+}
+
+[dir="rtl"] .search-input {
+  padding: 0 42px 0 16px;
+}
+
+.search-input:focus {
+  background: #FFFFFF;
+  border-color: var(--color-accent-yellow);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.3);
+}
+
+.categories-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-deep-blue);
+  box-shadow: var(--shadow-xs);
+}
+
+.categories-empty-state {
+  padding: var(--space-2xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
 }
 
 .categories-grid {

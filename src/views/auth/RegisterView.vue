@@ -12,12 +12,14 @@ import {
   CheckCircle2,
   ArrowRight,
   Globe,
-  Home
+  Home,
+  ChevronDown
 } from 'lucide-vue-next';
 import DrugzaLogo from '@/components/ui/DrugzaLogo.vue';
 import Button from '@/components/ui/Button.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useI18n } from '@/composables/useI18n';
+import { addressService, type CountryDto, type CityDto, type AreaDto } from '@/services/address.service';
 
 const router = useRouter();
 const { t, locale, toggleLocale } = useI18n();
@@ -31,6 +33,64 @@ const password = ref('');
 const confirmPassword = ref('');
 const showPassword = ref(false);
 const agreeTerms = ref(false);
+
+const countries = ref<CountryDto[]>([]);
+const cities = ref<CityDto[]>([]);
+const areas = ref<AreaDto[]>([]);
+const areaZones = ref<Array<{ id: number; name: string }>>([]);
+const countryId = ref<number | null>(null);
+const cityId = ref<number | null>(null);
+const areaId = ref<number | null>(null);
+const streetAddress = ref('');
+const isLoadingLocations = ref(false);
+const countriesLoaded = ref(false);
+
+async function loadCountries() {
+  if (countriesLoaded.value || isLoadingLocations.value) return;
+  isLoadingLocations.value = true;
+  try {
+    countries.value = await addressService.getAllCountries();
+    countriesLoaded.value = true;
+  } finally {
+    isLoadingLocations.value = false;
+  }
+}
+
+async function onCountryChange() {
+  cities.value = [];
+  areas.value = [];
+  areaZones.value = [];
+  cityId.value = null;
+  areaId.value = null;
+  if (!countryId.value) return;
+
+  isLoadingLocations.value = true;
+  try {
+    cities.value = await addressService.getCities(countryId.value);
+  } finally {
+    isLoadingLocations.value = false;
+  }
+}
+
+async function onCityChange() {
+  areas.value = [];
+  areaZones.value = [];
+  areaId.value = null;
+  if (!cityId.value) return;
+
+  isLoadingLocations.value = true;
+  try {
+    areas.value = await addressService.getAreas(cityId.value);
+  } finally {
+    isLoadingLocations.value = false;
+  }
+}
+
+async function onAreaChange() {
+  areaZones.value = [];
+  if (!areaId.value) return;
+  areaZones.value = await addressService.getZonesByArea(areaId.value);
+}
 
 const formErrorMessage = ref<string | null>(null);
 
@@ -47,6 +107,21 @@ async function handleRegister() {
     return;
   }
 
+  if (!countryId.value || !cityId.value || !areaId.value) {
+    formErrorMessage.value = t('auth.addressFieldsRequired');
+    return;
+  }
+
+  if (!streetAddress.value.trim()) {
+    formErrorMessage.value = t('auth.streetAddressRequired');
+    return;
+  }
+
+  let zones = areaZones.value;
+  if (zones.length === 0 && areaId.value) {
+    zones = await addressService.getZonesByArea(areaId.value);
+  }
+
   const formData = new FormData();
   formData.append('FullName', fullName.value.trim());
   formData.append('BussinesName', businessName.value.trim());
@@ -54,10 +129,17 @@ async function handleRegister() {
   formData.append('PhoneNumber', phoneNumber.value.trim());
   formData.append('Password', password.value);
   formData.append('Role', 'Pharmacy');
+  formData.append('CountryId', String(countryId.value));
+  formData.append('CityId', String(cityId.value));
+  formData.append('AreaId', String(areaId.value));
+  formData.append('AddressLines[0]', streetAddress.value.trim());
+  zones.forEach((zone, index) => {
+    formData.append(`ZoneId[${index}]`, String(zone.id));
+  });
 
   const res = await register(formData);
   if (res.success) {
-    router.push({ path: '/auth/otp', query: { email: res.email } });
+    router.push({ path: '/auth/login', query: { email: res.email, registered: '1' } });
   }
 }
 </script>
@@ -191,6 +273,87 @@ async function handleRegister() {
                   autocomplete="tel"
                 />
               </div>
+            </div>
+          </div>
+
+          <!-- Country & City -->
+          <div class="form-row">
+            <div class="field-group">
+              <label for="reg-country" class="field-label">{{ t('auth.country') }}</label>
+              <div class="select-container">
+                <select
+                  id="reg-country"
+                  v-model="countryId"
+                  required
+                  class="form-input form-select"
+                  @focus="loadCountries"
+                  @click="loadCountries"
+                  @change="onCountryChange"
+                >
+                  <option :value="null" disabled>
+                    {{ isLoadingLocations ? t('auth.loadingLocations') : t('auth.selectCountry') }}
+                  </option>
+                  <option v-for="country in countries" :key="country.id" :value="country.id">
+                    {{ country.name }}
+                  </option>
+                </select>
+                <ChevronDown :size="16" class="select-chevron" />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="reg-city" class="field-label">{{ t('auth.city') }}</label>
+              <div class="select-container">
+                <select
+                  id="reg-city"
+                  v-model="cityId"
+                  required
+                  class="form-input form-select"
+                  :disabled="!countryId"
+                  @change="onCityChange"
+                >
+                  <option :value="null" disabled>{{ t('auth.selectCity') }}</option>
+                  <option v-for="city in cities" :key="city.id" :value="city.id">
+                    {{ city.name }}
+                  </option>
+                </select>
+                <ChevronDown :size="16" class="select-chevron" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Area & Street Address -->
+          <div class="form-row">
+            <div class="field-group">
+              <label for="reg-area" class="field-label">{{ t('auth.area') }}</label>
+              <div class="select-container">
+                <select
+                  id="reg-area"
+                  v-model="areaId"
+                  required
+                  class="form-input form-select"
+                  :disabled="!cityId"
+                  @change="onAreaChange"
+                >
+                  <option :value="null" disabled>{{ t('auth.selectArea') }}</option>
+                  <option v-for="area in areas" :key="area.id" :value="area.id">
+                    {{ area.name }}
+                  </option>
+                </select>
+                <ChevronDown :size="16" class="select-chevron" />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="reg-street" class="field-label">{{ t('auth.streetAddress') }}</label>
+              <input
+                id="reg-street"
+                v-model="streetAddress"
+                type="text"
+                required
+                :placeholder="t('auth.streetAddressPlaceholder')"
+                class="form-input no-icon"
+              />
             </div>
           </div>
 
@@ -507,6 +670,47 @@ async function handleRegister() {
   border-color: var(--color-primary-blue);
   background: #FFFFFF;
   box-shadow: 0 0 0 3px rgba(25, 118, 173, 0.12);
+}
+
+.form-input.no-icon {
+  padding: 0 12px;
+}
+
+.select-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-select {
+  appearance: none;
+  padding: 0 36px 0 12px;
+  cursor: pointer;
+}
+
+.form-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.select-chevron {
+  position: absolute;
+  right: 12px;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+[dir="rtl"] .form-input.form-select {
+  padding: 0 12px 0 36px;
+}
+
+[dir="rtl"] .form-input.no-icon {
+  padding: 0 12px;
+}
+
+[dir="rtl"] .select-chevron {
+  right: auto;
+  left: 12px;
 }
 
 .toggle-eye {
