@@ -45,7 +45,7 @@ interface PolicySection {
 }
 
 const route = useRoute();
-const { locale, toggleLocale } = useI18n();
+const { t, locale, toggleLocale } = useI18n();
 
 const isMinimal = computed(() => {
   return route.path.startsWith('/auth') || route.query.minimal === 'true' || route.meta.hideNav === true;
@@ -68,9 +68,7 @@ async function loadPolicy() {
     content.value = res;
   } catch (err: any) {
     console.error('[PrivacyPolicyView] Error fetching policy:', err);
-    error.value = locale.value === 'ar'
-      ? 'تعذر جلب سياسة الخصوصية من الخادم. يرجى التحقق من الاتصال والمحاولة مرة أخرى.'
-      : 'Failed to retrieve privacy policy from the server. Please check your connection and try again.';
+    error.value = t('privacy.fetchErrorDesc');
   } finally {
     isLoading.value = false;
   }
@@ -122,7 +120,7 @@ const parsedPolicy = computed<{ preamble: PolicyPreamble | null; sections: Polic
       }
       if (line === 'المقدمة' || line.startsWith('المقدمة:')) {
         preamble = {
-          title: locale.value === 'ar' ? 'المقدمة والأحكام التمهيدية' : 'Introduction & Overview',
+          title: t('privacy.introTitle'),
           content: ''
         };
         continue;
@@ -249,19 +247,19 @@ function getSectionIcon(index: number) {
         <div class="minimal-top-actions">
           <button type="button" class="minimal-lang-btn" @click="toggleLocale">
             <Globe :size="16" />
-            <span>{{ locale === 'ar' ? 'English' : 'اللغة العربية' }}</span>
+            <span>{{ t('topBar.switchLanguage') }}</span>
           </button>
           <router-link to="/auth/register" class="minimal-close-btn">
-            <span>{{ locale === 'ar' ? 'العودة للتسجيل' : 'Back to Register' }}</span>
+            <span>{{ t('privacy.backToRegister') }}</span>
           </router-link>
         </div>
       </div>
 
       <!-- Breadcrumb Navigation (only when full layout) -->
       <nav v-else class="privacy-breadcrumb" aria-label="Breadcrumb">
-        <router-link to="/">{{ locale === 'ar' ? 'الرئيسية' : 'Home' }}</router-link>
+        <router-link to="/">{{ t('common.home') }}</router-link>
         <span class="sep">/</span>
-        <span class="current">{{ locale === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy' }}</span>
+        <span class="current">{{ t('privacy.pageTitle') }}</span>
       </nav>
 
       <!-- Hero Header Card -->
@@ -274,18 +272,15 @@ function getSectionIcon(index: number) {
           <div class="hero-text-block">
             <div class="compliance-pill">
               <Lock :size="12" />
-              <span>{{ locale === 'ar' ? 'وثيقة قانونية رسمية • قانون حماية البيانات رقم 151 لسنة 2020' : 'Official Legal Policy • Data Protection Law No. 151 of 2020' }}</span>
+              <span>{{ t('privacy.officialNotice') }}</span>
             </div>
 
             <h1 class="hero-title">
-              {{ locale === 'ar' ? 'سياسة الخصوصية وأمان البيانات' : 'Privacy & Data Protection Policy' }}
+              {{ t('privacy.pageTitle') }}
             </h1>
 
             <p class="hero-desc">
-              {{ locale === 'ar'
-                ? 'تلتزم منصة DrugZA بحماية وسرية البيانات الخاصة بالصيدليات والمخازن الدوائية الشريكة وفقاً لأعلى معايير التشفير والتشريعات المصرية المعمول بها.'
-                : 'DrugZA platform is strictly committed to protecting the privacy and commercial security of all user pharmacies and distributors.'
-              }}
+              {{ t('privacy.pageSubtitle') }}
             </p>
           </div>
         </div>
@@ -297,8 +292,8 @@ function getSectionIcon(index: number) {
               <Scale :size="18" />
             </div>
             <div class="pillar-text">
-              <strong>{{ locale === 'ar' ? 'الامتثال لقانون 151 لسنة 2020' : 'Law 151/2020 Compliance' }}</strong>
-              <p>{{ locale === 'ar' ? 'حماية تامة للبيانات التجارية والشخصية' : 'Full alignment with Egyptian statutory provisions' }}</p>
+              <strong>{{ t('privacy.complianceBadge') }}</strong>
+              <p>{{ t('privacy.complianceDesc') }}</p>
             </div>
           </div>
 
@@ -307,8 +302,8 @@ function getSectionIcon(index: number) {
               <Lock :size="18" />
             </div>
             <div class="pillar-text">
-              <strong>{{ locale === 'ar' ? 'تشفير متقدم وسجلات آمنة' : 'Bank-Grade Encryption' }}</strong>
-              <p>{{ locale === 'ar' ? 'حماية وتشفير الفواتير وطلبات الشراء' : 'End-to-end cryptographic protection for transactions' }}</p>
+              <strong>{{ t('privacy.dataSecurityBadge') }}</strong>
+              <p>{{ t('privacy.dataSecurityDesc') }}</p>
             </div>
           </div>
 
@@ -317,8 +312,8 @@ function getSectionIcon(index: number) {
               <UserCheck :size="18" />
             </div>
             <div class="pillar-text">
-              <strong>{{ locale === 'ar' ? 'حظر بيع أو تأجير البيانات' : 'Zero Data Selling' }}</strong>
-              <p>{{ locale === 'ar' ? 'عدم الإفصاح لأي أطراف دعائية خارجية' : 'Strict pledge against monetizing partner records' }}</p>
+              <strong>{{ t('privacy.rightsBadge') }}</strong>
+              <p>{{ t('privacy.rightsDesc') }}</p>
             </div>
           </div>
         </div>
@@ -330,7 +325,7 @@ function getSectionIcon(index: number) {
         <div v-if="isLoading" class="state-card loading-card" style="display: flex; flex-direction: column; gap: 18px; padding: 32px;">
           <div class="spinner-line" style="display: flex; align-items: center; gap: 10px; color: var(--color-primary-blue); font-weight: 600;">
             <RefreshCw :size="20" class="spin-animation" />
-            <span>{{ locale === 'ar' ? 'جاري استرجاع بنود سياسة الخصوصية المعتمدة...' : 'Loading official privacy policy...' }}</span>
+            <span>{{ t('privacy.loadingDoc') }}</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
             <Skeleton width="45%" height="24px" radius="6px" />
@@ -348,11 +343,11 @@ function getSectionIcon(index: number) {
         <!-- Error State with Retry Button -->
         <div v-else-if="error" class="state-card error-card">
           <ShieldAlert :size="42" class="error-shield-icon" />
-          <h3 class="error-heading">{{ locale === 'ar' ? 'تعذر جلب البيانات' : 'Data Retrieval Error' }}</h3>
+          <h3 class="error-heading">{{ t('privacy.dataErrorTitle') }}</h3>
           <p class="error-message">{{ error }}</p>
           <Button variant="primary" size="md" @click="loadPolicy">
             <RefreshCw :size="16" />
-            <span>{{ locale === 'ar' ? 'إعادة المحاولة الآن' : 'Retry Now' }}</span>
+            <span>{{ t('privacy.retryBtn') }}</span>
           </Button>
         </div>
 
@@ -360,7 +355,7 @@ function getSectionIcon(index: number) {
         <div v-else class="policy-card-shell">
           <!-- Quick Navigation Jump Pills -->
           <div v-if="parsedSections.length > 0" class="policy-jump-bar">
-            <span class="jump-label">{{ locale === 'ar' ? 'الانتقال السريع للقسم:' : 'Jump to section:' }}</span>
+            <span class="jump-label">{{ t('privacy.jumpToSection') }}</span>
             <div class="jump-pills-list">
               <button
                 v-for="sec in parsedSections"
@@ -369,7 +364,7 @@ function getSectionIcon(index: number) {
                 class="jump-pill-btn"
                 @click="scrollToSection(sec.id)"
               >
-                {{ sec.ordinal ? (locale === 'ar' ? sec.ordinal : 'Section ' + sec.number) : sec.badge }}
+                {{ sec.ordinal ? (locale === 'ar' ? sec.ordinal : t('privacy.sectionLabel', { number: sec.number })) : sec.badge }}
               </button>
             </div>
           </div>
@@ -388,13 +383,10 @@ function getSectionIcon(index: number) {
             <CheckCircle2 :size="20" class="callout-icon" />
             <div>
               <strong class="callout-title">
-                {{ locale === 'ar' ? 'سياسة نافذة ومعتمدة قانونياً:' : 'Legally Binding & Effective:' }}
+                {{ t('privacy.bindingNotice') }}
               </strong>
               <p class="callout-desc">
-                {{ locale === 'ar'
-                  ? 'تم صياغة هذه السياسة لحماية الكيانات الدوائية المرخصة (صيدليات ومستودعات)، ويُعد استخدامك لمنصة DrugZA موافقة صريحة على بنود هذه السياسة.'
-                  : 'This policy governs all operations between licensed pharmacies and medical distributors on DrugZA. Using our platform implies acceptance of these terms.'
-                }}
+                {{ t('privacy.bindingDesc') }}
               </p>
             </div>
           </div>
@@ -459,17 +451,14 @@ function getSectionIcon(index: number) {
               <Building2 :size="26" />
             </div>
             <div class="banner-text">
-              <h4 class="banner-title">{{ locale === 'ar' ? 'هل لديك أي استفسار بشأن حماية البيانات أو حسابك؟' : 'Questions regarding your data protection or account?' }}</h4>
+              <h4 class="banner-title">{{ t('privacy.dpoHelpTitle') }}</h4>
               <p class="banner-desc">
-                {{ locale === 'ar'
-                  ? 'فريق الامتثال القانوني وحماية البيانات في دراجزا متاح للإجابة على استفساراتكم عبر البريد المعتمد:'
-                  : 'DrugZA regulatory compliance desk is available to assist you anytime via email:'
-                }}
+                {{ t('privacy.dpoHelpDesc') }}
                 <a href="mailto:support@drugza.com" class="banner-email-link">support@drugza.com</a>
               </p>
             </div>
             <a href="mailto:support@drugza.com" class="banner-cta-btn">
-              {{ locale === 'ar' ? 'مراسلة الدعم القانوني' : 'Contact Support' }}
+              {{ t('privacy.contactDpoBtn') }}
             </a>
           </section>
         </div>

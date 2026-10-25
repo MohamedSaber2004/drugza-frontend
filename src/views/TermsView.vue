@@ -39,7 +39,7 @@ interface TermSection {
 }
 
 const route = useRoute();
-const { locale, toggleLocale } = useI18n();
+const { t, locale, toggleLocale } = useI18n();
 
 const isMinimal = computed(() => {
   return route.path.startsWith('/auth') || route.query.minimal === 'true' || route.meta.hideNav === true;
@@ -68,9 +68,7 @@ async function loadTerms() {
     if (err.response?.status === 401) {
       isUnauthorized.value = true;
     } else {
-      error.value = locale.value === 'ar'
-        ? 'تعذر جلب الشروط والأحكام من الخادم. يرجى التحقق من اتصالك والمحاولة لاحقاً.'
-        : 'Failed to retrieve terms and conditions from the server. Please check your connection and try again.';
+      error.value = t('terms.fetchErrorDesc');
     }
   } finally {
     isLoading.value = false;
@@ -278,19 +276,19 @@ const filteredSections = computed(() => {
         <div class="minimal-top-actions">
           <button type="button" class="minimal-lang-btn" @click="toggleLocale">
             <Globe :size="16" />
-            <span>{{ locale === 'ar' ? 'English' : 'اللغة العربية' }}</span>
+            <span>{{ t('topBar.switchLanguage') }}</span>
           </button>
           <router-link to="/auth/register" class="minimal-close-btn">
-            <span>{{ locale === 'ar' ? 'العودة للتسجيل' : 'Back to Register' }}</span>
+            <span>{{ t('terms.backToRegister') }}</span>
           </router-link>
         </div>
       </div>
 
       <!-- Standard Breadcrumb (only when full layout) -->
       <nav v-else class="terms-breadcrumb" aria-label="Breadcrumb">
-        <router-link to="/">{{ locale === 'ar' ? 'الرئيسية' : 'Home' }}</router-link>
+        <router-link to="/">{{ t('common.home') }}</router-link>
         <span class="sep">/</span>
-        <span class="current">{{ locale === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions' }}</span>
+        <span class="current">{{ t('terms.pageTitle') }}</span>
       </nav>
 
       <!-- Hero Header Card -->
@@ -303,18 +301,15 @@ const filteredSections = computed(() => {
           <div class="hero-text-block">
             <div class="compliance-pill">
               <FileText :size="13" />
-              <span>{{ locale === 'ar' ? 'اتفاقية الاستخدام الرسمية • آخر تحديث: 30 / 07 / 2026' : 'Official Platform Terms • Last Updated: July 30, 2026' }}</span>
+              <span>{{ t('terms.officialNotice') }}</span>
             </div>
 
             <h1 class="hero-title">
-              {{ locale === 'ar' ? 'الشروط والأحكام العامة لمنصة DrugZA' : 'General Terms & Conditions of DrugZA' }}
+              {{ t('terms.pageTitle') }}
             </h1>
 
             <p class="hero-desc">
-              {{ locale === 'ar'
-                ? 'توضح هذه الوثيقة القواعد والضوابط القانونية والتجارية المنظمة لخدمات الوساطة التقنية والتوريد بين الصيدليات المرخصة والمخازن الدوائية داخل جمهورية مصر العربية.'
-                : 'These terms govern all pharmaceutical marketplace and technological intermediation services between licensed pharmacies and medical distributors in Egypt.'
-              }}
+              {{ t('terms.pageSubtitle') }}
             </p>
           </div>
         </div>
@@ -326,8 +321,8 @@ const filteredSections = computed(() => {
               <Building2 :size="18" />
             </div>
             <div class="pillar-text">
-              <strong>{{ locale === 'ar' ? 'وسيط تقني معتمد' : 'Tech Intermediary' }}</strong>
-              <p>{{ locale === 'ar' ? 'DrugZA منصة تقنية وليست مالكاً أو بائعاً للمنتجات' : 'DrugZA connects verified pharmacies & distributors' }}</p>
+              <strong>{{ t('terms.intermediaryBadge') }}</strong>
+              <p>{{ t('terms.intermediaryDesc') }}</p>
             </div>
           </div>
 
@@ -336,8 +331,8 @@ const filteredSections = computed(() => {
               <ShieldCheck :size="18" />
             </div>
             <div class="pillar-text">
-              <strong>{{ locale === 'ar' ? 'تراخيص معتمدة وصالحة' : 'Licensed Operations' }}</strong>
-              <p>{{ locale === 'ar' ? 'التحقق الدوري من تراخيص وزارة الصحة وهيئة الدواء' : 'Periodic validation of official EDA pharmaceutical licenses' }}</p>
+              <strong>{{ t('terms.licenseBadge') }}</strong>
+              <p>{{ t('terms.licenseDesc') }}</p>
             </div>
           </div>
 
@@ -346,8 +341,8 @@ const filteredSections = computed(() => {
               <Lock :size="18" />
             </div>
             <div class="pillar-text">
-              <strong>{{ locale === 'ar' ? 'بيئة آمنة وملزمة قانوناً' : 'Legally Enforceable' }}</strong>
-              <p>{{ locale === 'ar' ? 'تخضع الاتفاقية للقوانين والمحاكم المصرية السارية' : 'Governed and construed under Arab Republic of Egypt laws' }}</p>
+              <strong>{{ t('terms.legalBadge') }}</strong>
+              <p>{{ t('terms.legalDesc') }}</p>
             </div>
           </div>
         </div>
@@ -359,7 +354,7 @@ const filteredSections = computed(() => {
         <div v-if="isLoading" class="state-card loading-card" style="display: flex; flex-direction: column; gap: 18px; padding: 32px;">
           <div class="spinner-line" style="display: flex; align-items: center; gap: 10px; color: var(--color-primary-blue); font-weight: 600;">
             <RefreshCw :size="20" class="spin-animation" />
-            <span>{{ locale === 'ar' ? 'جاري جلب وثيقة الشروط والأحكام المعتمدة...' : 'Retrieving official terms and conditions...' }}</span>
+            <span>{{ t('terms.loadingDoc') }}</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
             <Skeleton width="45%" height="24px" radius="6px" />
@@ -380,22 +375,19 @@ const filteredSections = computed(() => {
             <Lock :size="38" />
           </div>
           <h3 class="auth-card-title">
-            {{ locale === 'ar' ? 'يتطلب الاطلاع على الشروط تسجيل الدخول' : 'Authentication Required' }}
+            {{ t('terms.authRequiredTitle') }}
           </h3>
           <p class="auth-card-desc">
-            {{ locale === 'ar'
-              ? 'إن وثيقة الشروط والأحكام المعتمدة خاصة بالصيادلة والمنشآت الدوائية المسجلة في منصة دراجزا. يرجى تسجيل الدخول بحسابك أو إنشاء حساب جديد للاطلاع على الوثيقة.'
-              : 'Official terms are reserved for verified pharmacies and healthcare facilities on DrugZA. Please log in or register to review the complete agreement.'
-            }}
+            {{ t('terms.authRequiredDesc') }}
           </p>
           <div class="auth-action-buttons">
             <router-link to="/auth/login?redirect=/terms" class="auth-btn primary">
               <LogIn :size="16" />
-              <span>{{ locale === 'ar' ? 'تسجيل الدخول' : 'Log In' }}</span>
+              <span>{{ t('terms.loginBtn') }}</span>
             </router-link>
             <router-link to="/auth/register" class="auth-btn secondary">
               <UserPlus :size="16" />
-              <span>{{ locale === 'ar' ? 'إنشاء حساب جديد' : 'Register Account' }}</span>
+              <span>{{ t('terms.registerBtn') }}</span>
             </router-link>
           </div>
         </div>
@@ -403,11 +395,11 @@ const filteredSections = computed(() => {
         <!-- General Error State -->
         <div v-else-if="error" class="state-card error-card">
           <AlertCircle :size="42" class="error-alert-icon" />
-          <h3 class="error-heading">{{ locale === 'ar' ? 'تعذر جلب البيانات' : 'Data Retrieval Error' }}</h3>
+          <h3 class="error-heading">{{ t('terms.dataErrorTitle') }}</h3>
           <p class="error-message">{{ error }}</p>
           <Button variant="primary" size="md" @click="loadTerms">
             <RefreshCw :size="16" />
-            <span>{{ locale === 'ar' ? 'إعادة المحاولة الآن' : 'Retry Now' }}</span>
+            <span>{{ t('terms.retryBtn') }}</span>
           </Button>
         </div>
 
@@ -421,7 +413,7 @@ const filteredSections = computed(() => {
               <input
                 v-model="searchQuery"
                 type="text"
-                :placeholder="locale === 'ar' ? 'بحث في بنود الشروط والأحكام...' : 'Search terms, warranties, delivery...'"
+                :placeholder="t('terms.searchPlaceholder')"
                 class="terms-search-input"
               />
               <button
@@ -438,7 +430,7 @@ const filteredSections = computed(() => {
 
           <!-- Quick Jump Pills -->
           <div v-if="parsedSections.length > 0" class="jump-pills-row">
-            <span class="jump-label">{{ locale === 'ar' ? 'الانتقال السريع للبند:' : 'Jump to section:' }}</span>
+            <span class="jump-label">{{ t('terms.jumpToClause') }}</span>
             <div class="jump-pills-scroll">
               <button
                 v-for="sec in parsedSections"
@@ -447,7 +439,7 @@ const filteredSections = computed(() => {
                 class="jump-pill-btn"
                 @click="scrollToSection(sec.id)"
               >
-                {{ sec.ordinal ? (locale === 'ar' ? sec.ordinal : 'Clause ' + sec.number) : sec.badge }}
+                {{ sec.ordinal ? (locale === 'ar' ? sec.ordinal : t('terms.clauseLabel', { number: sec.number })) : sec.badge }}
               </button>
             </div>
           </div>
@@ -457,30 +449,24 @@ const filteredSections = computed(() => {
             <CheckCircle2 :size="20" class="callout-icon" />
             <div>
               <strong class="callout-title">
-                {{ locale === 'ar' ? 'اتفاقية ملزمة قانوناً بأحكام القانون المصري:' : 'Legally Binding Agreement Under Egyptian Law:' }}
+                {{ t('terms.bindingNotice') }}
               </strong>
               <p class="callout-desc">
-                {{ locale === 'ar'
-                  ? 'إن استخدامك لمنصة DrugZA أو تسجيل حسابك يُعد موافقة صريحة وكاملة على كافة بنود الشروط والأحكام وسياسات الخصوصية والإرجاع المرتبطة بها.'
-                  : 'Using DrugZA constitutes your express consent and compliance with all terms, operating guidelines, and related platform policies.'
-                }}
+                {{ t('terms.bindingDesc') }}
               </p>
             </div>
           </div>
 
           <!-- Search Results Counter if filtering -->
           <div v-if="searchQuery" class="search-results-info">
-            {{ locale === 'ar'
-              ? `تم العثور على ${filteredSections.length} قسم يحتوي على: "${searchQuery}"`
-              : `Found ${filteredSections.length} sections matching: "${searchQuery}"`
-            }}
+            {{ t('terms.foundSections', { count: filteredSections.length, query: searchQuery }) }}
           </div>
 
           <!-- Rich Styled Sections Stream -->
           <div class="sections-stream">
             <div v-if="filteredSections.length === 0" class="empty-search-state">
               <Search :size="36" />
-              <p>{{ locale === 'ar' ? 'لم يتم العثور على بنود مطابقة لبحثك.' : 'No terms matched your search keywords.' }}</p>
+              <p>{{ t('terms.noMatches') }}</p>
             </div>
 
             <article
@@ -541,17 +527,14 @@ const filteredSections = computed(() => {
               <Building2 :size="26" />
             </div>
             <div class="banner-text">
-              <h4 class="banner-title">{{ locale === 'ar' ? 'هل لديك أي استفسار قانوني بشأن العقود والتوريد؟' : 'Need legal or contract clarification?' }}</h4>
+              <h4 class="banner-title">{{ t('terms.legalHelpTitle') }}</h4>
               <p class="banner-desc">
-                {{ locale === 'ar'
-                  ? 'فريق الشؤون القانونية والامتثال في منصة DrugZA متواجد لدعمكم ومراجعة أي تساؤلات عبر البريد المعتمد:'
-                  : 'DrugZA legal & regulatory compliance desk is available to answer any questions via email:'
-                }}
+                {{ t('terms.legalHelpDesc') }}
                 <a href="mailto:support@drugza.com" class="banner-email-link">support@drugza.com</a>
               </p>
             </div>
             <a href="mailto:support@drugza.com" class="banner-cta-btn">
-              {{ locale === 'ar' ? 'مراسلة الشؤون القانونية' : 'Contact Legal Desk' }}
+              {{ t('terms.contactLegalBtn') }}
             </a>
           </section>
         </div>

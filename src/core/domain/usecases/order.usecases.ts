@@ -51,3 +51,5 @@ export class CreateReturnOrderUseCase {
     return this.orderRepo.createReturnOrder(orderId, reason);
   }
 }
+
+export { GetPharmacyReturnsUseCase as GetReturnsUseCase };

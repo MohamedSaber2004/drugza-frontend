@@ -54,7 +54,7 @@ export function getUserId(): string | null {
 
 export function useFavorites() {
   const toast = useToast();
-  const { locale } = useI18n();
+  const { t } = useI18n();
 
   const favoritesCount = computed(() => favoriteIds.value.length);
 
@@ -107,11 +107,7 @@ export function useFavorites() {
     const userId = getUserId();
 
     if (!token || !userId) {
-      toast.error(
-        locale.value === 'ar'
-          ? 'يرجى تسجيل الدخول أولاً لإضافة الأدوية إلى قائمة المفضلة.'
-          : 'Please log in first to save medicines to your favorites.'
-      );
+      toast.error(t('favorites.loginRequired'));
       return false;
     }
 
@@ -133,17 +129,9 @@ export function useFavorites() {
       await productsService.toggleFavorite(userId, productId, productPriceId);
 
       if (wasFav) {
-        toast.info(
-          locale.value === 'ar'
-            ? `تمت إزالة ${productName || 'الدواء'} من قائمة المفضلة.`
-            : `${productName || 'Product'} removed from favorites.`
-        );
+        toast.info(t('favorites.removedSuccess', { name: productName || t('favorites.defaultMedicine') }));
       } else {
-        toast.success(
-          locale.value === 'ar'
-            ? `تمت إضافة ${productName || 'الدواء'} إلى قائمة المفضلة!`
-            : `${productName || 'Product'} saved to your Quick Reorder favorites!`
-        );
+        toast.success(t('favorites.addedSuccess', { name: productName || t('favorites.defaultMedicine') }));
       }
 
       return true;
@@ -161,12 +149,8 @@ export function useFavorites() {
       }
       persist();
 
-      const errMsg = err?.response?.data?.message || err?.message || '';
-      toast.error(
-        locale.value === 'ar'
-          ? `تعذر تحديث المفضلة: ${errMsg || 'يرجى المحاولة مرة أخرى.'}`
-          : `Failed to update favorites: ${errMsg || 'Please try again.'}`
-      );
+      const errMsg = err?.response?.data?.message || err?.message || t('favorites.tryAgain');
+      toast.error(t('favorites.updateFailed', { error: errMsg }));
       return false;
     }
   }

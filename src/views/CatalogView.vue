@@ -425,7 +425,7 @@ function resetFilters() {
                 class="filter-reset-hint"
                 @click="selectedProvider = 'all'"
               >
-                {{ locale === 'ar' ? 'إلغاء' : 'Clear' }}
+                {{ t('common.clear') }}
               </button>
             </div>
             <div class="category-radio-list scrollable-filter-list">
@@ -471,7 +471,7 @@ function resetFilters() {
                 class="filter-reset-hint"
                 @click="selectedCategory = 'all'"
               >
-                {{ locale === 'ar' ? 'إلغاء' : 'Clear' }}
+                {{ t('common.clear') }}
               </button>
             </div>
             <div class="category-radio-list scrollable-filter-list">
@@ -556,7 +556,7 @@ function resetFilters() {
         <main class="catalog-main" v-loading="isLoading">
           <!-- Active Filter Tags -->
           <div v-if="selectedProvider !== 'all' || selectedCategory !== 'all' || searchQuery || onlyFlashSales" class="active-chips-bar">
-            <span class="chips-label">{{ locale === 'ar' ? 'الفلاتر النشطة:' : 'Active Filters:' }}</span>
+            <span class="chips-label">{{ t('common.activeFilters') }}</span>
             <span v-if="selectedProvider !== 'all'" class="filter-chip">
               <Building2 :size="12" style="margin-inline-end: 4px;" />
               {{ activeProviderName }}
@@ -616,7 +616,7 @@ function resetFilters() {
               v-model="currentPage"
               :total-items="paginationTotal"
               :page-size="pageSize"
-              :item-label="locale === 'ar' ? 'منتج' : 'products'"
+              :item-label="t('common.items')"
               :has-more="hasMore"
             />
           </template>

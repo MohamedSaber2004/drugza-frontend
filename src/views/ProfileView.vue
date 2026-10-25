@@ -15,7 +15,6 @@ import {
   KeyRound,
   Save,
   ArrowRight,
-  Upload,
   Calendar,
   Layers,
   Sparkles,
@@ -44,8 +43,6 @@ const formFullName = ref('');
 const formBusinessName = ref('');
 const formEmail = ref('');
 const formPhone = ref('');
-const profileImageFile = ref<File | null>(null);
-const imagePreviewUrl = ref<string | null>(null);
 
 const currentPassword = ref('');
 const newPassword = ref('');
@@ -57,7 +54,6 @@ function syncFormData() {
   formBusinessName.value = user.value?.businessName || '';
   formEmail.value = user.value?.email || '';
   formPhone.value = user.value?.phoneNumber || '';
-  imagePreviewUrl.value = user.value?.profileImage || null;
 }
 
 onMounted(async () => {
@@ -72,38 +68,22 @@ onMounted(async () => {
   }
 });
 
-function handleFileSelect(e: Event) {
-  const target = e.target as HTMLInputElement;
-  if (target.files && target.files[0]) {
-    const file = target.files[0];
-    profileImageFile.value = file;
-    imagePreviewUrl.value = URL.createObjectURL(file);
-  }
-}
-
 async function handleSaveProfile() {
   isSaving.value = true;
   try {
-    await updateProfile(
-      {
-        fullName: formFullName.value.trim(),
-        businessName: formBusinessName.value.trim(),
-        phoneNumber: formPhone.value.trim()
-      },
-      profileImageFile.value
-    );
+    await updateProfile({
+      fullName: formFullName.value.trim(),
+      businessName: formBusinessName.value.trim(),
+      phoneNumber: formPhone.value.trim()
+    });
     isEditing.value = false;
-    profileImageFile.value = null;
-    toast.success(
-      locale.value === 'ar'
-        ? 'تم تحديث بيانات الملف الشخصي بنجاح.'
-        : 'Profile updated successfully.'
-    );
+    syncFormData();
+    toast.success(t('profile.updateSuccess'));
   } catch (err: any) {
     const msg =
       err.response?.data?.message ||
       err.message ||
-      (locale.value === 'ar' ? 'فشل حفظ التعديلات.' : 'Failed to save changes.');
+      t('profile.updateFailed');
     toast.error(msg);
   } finally {
     isSaving.value = false;
@@ -112,40 +92,28 @@ async function handleSaveProfile() {
 
 function cancelEdit() {
   syncFormData();
-  profileImageFile.value = null;
   isEditing.value = false;
 }
 
 async function handlePasswordChange() {
   passwordError.value = '';
   if (!currentPassword.value || !newPassword.value) {
-    passwordError.value =
-      locale.value === 'ar'
-        ? 'يرجى ملء جميع حقول كلمة المرور.'
-        : 'Please complete all password fields.';
+    passwordError.value = t('profile.fillAllPasswordFields');
     return;
   }
   if (newPassword.value.length < 6) {
-    passwordError.value =
-      locale.value === 'ar'
-        ? 'يجب أن لا تقل كلمة المرور عن 6 أحرف.'
-        : 'New password must be at least 6 characters.';
+    passwordError.value = t('profile.passwordMinLength');
     return;
   }
   if (newPassword.value !== confirmPassword.value) {
-    passwordError.value =
-      locale.value === 'ar' ? 'كلمتا المرور غير متطابقتين.' : 'Passwords do not match.';
+    passwordError.value = t('profile.passwordMismatch');
     return;
   }
 
   isSubmittingPassword.value = true;
   try {
     await authService.changePassword(currentPassword.value, newPassword.value);
-    toast.success(
-      locale.value === 'ar'
-        ? 'تم تغيير كلمة المرور بنجاح.'
-        : 'Password updated successfully.'
-    );
+    toast.success(t('profile.passwordChangeSuccess'));
     isChangingPassword.value = false;
     currentPassword.value = '';
     newPassword.value = '';
@@ -154,9 +122,7 @@ async function handlePasswordChange() {
     const msg =
       err.response?.data?.message ||
       err.message ||
-      (locale.value === 'ar'
-        ? 'فشل تغيير كلمة المرور. يرجى التأكد من كلمة المرور الحالية.'
-        : 'Failed to change password. Please verify current password.');
+      t('profile.passwordChangeFailed');
     passwordError.value = msg;
     toast.error(msg);
   } finally {
@@ -175,7 +141,7 @@ function valOrPlaceholder(val: any, fallback?: string): string {
   ) {
     return String(val).trim();
   }
-  return fallback || (locale.value === 'ar' ? 'غير متوفر' : 'Not specified');
+  return fallback || t('profile.notSpecified');
 }
 
 function isBlank(val: any): boolean {
@@ -204,11 +170,11 @@ function formatDate(dateStr?: string | null): string {
 }
 
 const displayName = computed(() => {
-  if (!user.value) return locale.value === 'ar' ? 'صيدلي معتمد' : 'Licensed Pharmacist';
+  if (!user.value) return t('profile.licensedPharmacist');
   const full = user.value.fullName?.trim();
   const userN = user.value.userName?.trim();
   const bus = user.value.businessName?.trim();
-  return full || userN || bus || (locale.value === 'ar' ? 'صيدلي معتمد' : 'Licensed Pharmacist');
+  return full || userN || bus || t('profile.licensedPharmacist');
 });
 
 const avatarInitial = computed(() => {
@@ -251,8 +217,8 @@ const avatarInitial = computed(() => {
               <span>
                 {{
                   user?.isActive
-                    ? (locale === 'ar' ? 'حساب نشط ومعتمد' : 'Active & Verified Account')
-                    : (locale === 'ar' ? 'حساب قيد التفعيل' : 'Pending Activation')
+                    ? t('profile.activeVerifiedAccount')
+                    : t('profile.pendingActivation')
                 }}
               </span>
             </span>
@@ -261,18 +227,18 @@ const avatarInitial = computed(() => {
           <p class="pharmacy-org-title">
             <Building2 :size="16" />
             <span :class="{ 'is-placeholder-text': isBlank(user?.businessName) }">
-              {{ valOrPlaceholder(user?.businessName, locale === 'ar' ? 'لم يتم تحديد اسم المنشأة' : 'Facility name not provided') }}
+              {{ valOrPlaceholder(user?.businessName, t('profile.facilityNotProvided')) }}
             </span>
           </p>
 
           <div class="contact-badges">
             <span class="contact-badge" :class="{ 'is-empty': isBlank(user?.email) }">
               <Mail :size="14" />
-              <span>{{ valOrPlaceholder(user?.email, locale === 'ar' ? 'البريد غير متوفر' : 'No email') }}</span>
+              <span>{{ valOrPlaceholder(user?.email, t('profile.noEmail')) }}</span>
             </span>
             <span class="contact-badge" :class="{ 'is-empty': isBlank(user?.phoneNumber) }">
               <Phone :size="14" />
-              <span dir="ltr">{{ valOrPlaceholder(user?.phoneNumber, locale === 'ar' ? 'الهاتف غير متوفر' : 'No phone') }}</span>
+              <span dir="ltr">{{ valOrPlaceholder(user?.phoneNumber, t('profile.noPhone')) }}</span>
             </span>
           </div>
         </div>
@@ -284,7 +250,7 @@ const avatarInitial = computed(() => {
             size="md"
             @click="isEditing = true"
           >
-            <span>{{ locale === 'ar' ? 'تعديل البيانات' : 'Edit Profile' }}</span>
+            <span>{{ t('profile.editProfile') }}</span>
           </Button>
           <div v-else class="hero-edit-actions">
             <Button
@@ -302,7 +268,7 @@ const avatarInitial = computed(() => {
               @click="handleSaveProfile"
             >
               <Save :size="16" />
-              <span>{{ isSaving ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : t('profile.saveChanges') }}</span>
+              <span>{{ isSaving ? t('profile.saving') : t('profile.saveChanges') }}</span>
             </Button>
           </div>
         </div>
@@ -318,14 +284,10 @@ const avatarInitial = computed(() => {
                 <FileText :size="20" class="card-ico" />
                 <div>
                   <h2 class="card-title">
-                    {{ locale === 'ar' ? 'بيانات الحساب والصيدلية' : 'Account & Pharmacy Details' }}
+                    {{ t('profile.accountDetails') }}
                   </h2>
                   <p class="card-sub">
-                    {{
-                      locale === 'ar'
-                        ? 'البيانات المسجلة رسمياً لدى منصة درجزاء والمسترجعة من قاعدة البيانات'
-                        : 'Official registered records synchronized with Drugza platform API'
-                    }}
+                    {{ t('profile.officialDataNotice') }}
                   </p>
                 </div>
               </div>
@@ -333,8 +295,8 @@ const avatarInitial = computed(() => {
                 <CheckCircle2 :size="14" />
                 {{
                   user?.isActive
-                    ? (locale === 'ar' ? 'نشط ومعتمد' : 'Active & Verified')
-                    : (locale === 'ar' ? 'قيد التفعيل' : 'Pending Activation')
+                    ? t('profile.activeVerified')
+                    : t('profile.pendingActivation')
                 }}
               </span>
             </div>
@@ -344,87 +306,69 @@ const avatarInitial = computed(() => {
               <div class="detail-tile">
                 <span class="detail-key">{{ t('profile.fullName') }}</span>
                 <span class="detail-val" :class="{ 'is-placeholder-val': isBlank(user?.fullName) }">
-                  {{ valOrPlaceholder(user?.fullName, locale === 'ar' ? 'غير مسجل' : 'Not provided') }}
+                  {{ valOrPlaceholder(user?.fullName, t('profile.notProvided')) }}
                 </span>
               </div>
 
               <div class="detail-tile">
                 <span class="detail-key">{{ t('profile.businessName') }}</span>
                 <span class="detail-val" :class="{ 'is-placeholder-val': isBlank(user?.businessName) }">
-                  {{ valOrPlaceholder(user?.businessName, locale === 'ar' ? 'غير مسجل' : 'Not provided') }}
+                  {{ valOrPlaceholder(user?.businessName, t('profile.notProvided')) }}
                 </span>
               </div>
 
               <div class="detail-tile">
-                <span class="detail-key">{{ locale === 'ar' ? 'اسم المستخدم' : 'Username' }}</span>
+                <span class="detail-key">{{ t('profile.username') }}</span>
                 <span class="detail-val" :class="{ 'is-placeholder-val': isBlank(user?.userName) }">
-                  {{ valOrPlaceholder(user?.userName, locale === 'ar' ? 'غير محدد' : 'Not set') }}
+                  {{ valOrPlaceholder(user?.userName, t('profile.notSet')) }}
                 </span>
               </div>
 
               <div class="detail-tile">
                 <span class="detail-key">{{ t('profile.email') }}</span>
                 <span class="detail-val" :class="{ 'is-placeholder-val': isBlank(user?.email) }">
-                  {{ valOrPlaceholder(user?.email, locale === 'ar' ? 'غير متوفر' : 'Not provided') }}
+                  {{ valOrPlaceholder(user?.email, t('profile.notProvided')) }}
                 </span>
               </div>
 
               <div class="detail-tile">
                 <span class="detail-key">{{ t('profile.phone') }}</span>
                 <span class="detail-val" :class="{ 'is-placeholder-val': isBlank(user?.phoneNumber) }" dir="ltr">
-                  {{ valOrPlaceholder(user?.phoneNumber, locale === 'ar' ? 'غير متوفر' : 'Not provided') }}
+                  {{ valOrPlaceholder(user?.phoneNumber, t('profile.notProvided')) }}
                 </span>
               </div>
 
               <div class="detail-tile">
-                <span class="detail-key">{{ locale === 'ar' ? 'نوع الحساب والصلاحية' : 'Account Role' }}</span>
+                <span class="detail-key">{{ t('profile.accountRole') }}</span>
                 <span class="detail-val role-tag">
                   {{
                     user?.role
-                      ? (locale === 'ar' && (user.role === 'Pharmacy' || user.role.toLowerCase() === 'pharmacy')
-                          ? 'صيدلية مجتمعية مرخصة'
+                      ? (user.role === 'Pharmacy' || user.role.toLowerCase() === 'pharmacy'
+                          ? t('profile.communityPharmacy')
                           : user.role)
-                      : (locale === 'ar' ? 'صيدلية مرخصة' : 'Licensed Pharmacy')
+                      : t('profile.communityPharmacy')
                   }}
                 </span>
               </div>
 
 
               <div v-if="user?.minOrder" class="detail-tile">
-                <span class="detail-key">{{ locale === 'ar' ? 'الحد الأدنى للطلب' : 'Minimum Order' }}</span>
+                <span class="detail-key">{{ t('profile.minOrder') }}</span>
                 <span class="detail-val font-semibold">
-                  {{ user.minOrder }} {{ locale === 'ar' ? 'ج.م' : 'EGP' }}
+                  {{ user.minOrder }} {{ t('common.currency') }}
                 </span>
               </div>
 
               <div class="detail-tile">
-                <span class="detail-key">{{ locale === 'ar' ? 'تاريخ إنشاء الحساب' : 'Member Since' }}</span>
+                <span class="detail-key">{{ t('profile.memberSince') }}</span>
                 <span class="detail-val" :class="{ 'is-placeholder-val': !formatDate(user?.createdAt) }">
-                  {{ formatDate(user?.createdAt) || (locale === 'ar' ? 'غير متوفر' : 'Not available') }}
+                  {{ formatDate(user?.createdAt) || t('profile.notSpecified') }}
                 </span>
               </div>
             </div>
 
             <!-- Edit Form Mode -->
             <form v-else @submit.prevent="handleSaveProfile" class="edit-form-grid">
-              <!-- Profile Picture Upload Field -->
-              <div class="form-group full-width">
-                <label>{{ locale === 'ar' ? 'الصورة الشخصية أو شعار الصيدلية' : 'Profile Image or Pharmacy Logo' }}</label>
-                <div class="avatar-upload-row">
-                  <div class="preview-avatar-box">
-                    <img v-if="imagePreviewUrl" :src="imagePreviewUrl" class="preview-img" />
-                    <img v-else :src="getPlaceholder('user')" alt="Placeholder" class="preview-img" />
-                  </div>
-                  <div class="upload-btn-wrap">
-                    <label class="custom-file-btn">
-                      <Upload :size="16" />
-                      <span>{{ locale === 'ar' ? 'اختيار صورة جديدة' : 'Choose New Photo' }}</span>
-                      <input type="file" accept="image/*" class="hidden-file-input" @change="handleFileSelect" />
-                    </label>
-                    <span class="upload-hint">{{ locale === 'ar' ? 'الملفات المدعومة: JPG, PNG, WebP حتى 5MB' : 'Supported: JPG, PNG, WebP up to 5MB' }}</span>
-                  </div>
-                </div>
-              </div>
 
               <div class="form-group">
                 <label>{{ t('profile.fullName') }} *</label>
@@ -432,7 +376,7 @@ const avatarInitial = computed(() => {
                   v-model="formFullName"
                   type="text"
                   class="input-field"
-                  :placeholder="locale === 'ar' ? 'أدخل اسم الصيدلي' : 'Enter pharmacist full name'"
+                  :placeholder="t('profile.pharmacistNamePlaceholder')"
                   required
                 />
               </div>
@@ -443,19 +387,19 @@ const avatarInitial = computed(() => {
                   v-model="formBusinessName"
                   type="text"
                   class="input-field"
-                  :placeholder="locale === 'ar' ? 'أدخل اسم الصيدلية' : 'Enter pharmacy name'"
+                  :placeholder="t('profile.pharmacyNamePlaceholder')"
                   required
                 />
               </div>
 
               <div class="form-group">
-                <label>{{ t('profile.email') }} ({{ locale === 'ar' ? 'للقراءة فقط' : 'Read-only' }})</label>
+                <label>{{ t('profile.email') }} ({{ t('profile.readOnly') }})</label>
                 <input
                   v-model="formEmail"
                   type="email"
                   class="input-field is-readonly"
                   disabled
-                  :title="locale === 'ar' ? 'يتم تعديل البريد عبر إدارة الدعم الفني' : 'Email modification requires support verification'"
+                  :title="t('profile.emailModNotice')"
                 />
               </div>
 
@@ -476,7 +420,7 @@ const avatarInitial = computed(() => {
                   {{ t('common.cancel') }}
                 </Button>
                 <Button variant="primary" size="sm" type="submit" :loading="isSaving">
-                  {{ isSaving ? (locale === 'ar' ? 'جاري الحفظ...' : 'Saving...') : t('common.save') }}
+                  {{ isSaving ? t('profile.saving') : t('common.save') }}
                 </Button>
               </div>
             </form>
@@ -488,8 +432,8 @@ const avatarInitial = computed(() => {
               <div class="card-title-group">
                 <Lock :size="20" class="card-ico" />
                 <div>
-                  <h2 class="card-title">{{ locale === 'ar' ? 'الأمان وكلمة المرور' : 'Security & Credentials' }}</h2>
-                  <p class="card-sub">{{ locale === 'ar' ? 'إدارة كلمة المرور وحماية حساب الصيدلية' : 'Manage your password and authentication settings' }}</p>
+                  <h2 class="card-title">{{ t('profile.securityCardTitle') }}</h2>
+                  <p class="card-sub">{{ t('profile.securityCardSub') }}</p>
                 </div>
               </div>
               <Button
@@ -499,7 +443,7 @@ const avatarInitial = computed(() => {
                 @click="isChangingPassword = true"
               >
                 <KeyRound :size="15" />
-                <span>{{ locale === 'ar' ? 'تغيير كلمة المرور' : 'Change Password' }}</span>
+                <span>{{ t('profile.changePassword') }}</span>
               </Button>
             </div>
 
@@ -507,7 +451,7 @@ const avatarInitial = computed(() => {
               <div v-if="passwordError" class="pass-err-msg">{{ passwordError }}</div>
               <div class="password-inputs-row">
                 <div class="form-group">
-                  <label>{{ locale === 'ar' ? 'كلمة المرور الحالية' : 'Current Password' }} *</label>
+                  <label>{{ t('profile.currentPasswordLabel') }} *</label>
                   <input v-model="currentPassword" type="password" class="input-field" autocomplete="current-password" />
                 </div>
                 <div class="form-group">
@@ -524,12 +468,12 @@ const avatarInitial = computed(() => {
                   {{ t('common.cancel') }}
                 </Button>
                 <Button variant="primary" size="sm" :loading="isSubmittingPassword" @click="handlePasswordChange">
-                  {{ isSubmittingPassword ? (locale === 'ar' ? 'جاري التحديث...' : 'Updating...') : (locale === 'ar' ? 'تحديث كلمة المرور' : 'Update Password') }}
+                  {{ isSubmittingPassword ? t('profile.updatingPassword') : t('profile.updatePasswordBtn') }}
                 </Button>
               </div>
             </div>
             <p v-else class="security-safe-text">
-              {{ locale === 'ar' ? 'حسابك محمي ومؤمن عبر التحقق الرقمي لتأكيد العمليات والتسوق بالجملة.' : 'Your account is secured with digital verification enabled on sensitive operations.' }}
+              {{ t('profile.securityNotice') }}
             </p>
           </div>
         </div>
@@ -537,14 +481,14 @@ const avatarInitial = computed(() => {
         <!-- Col 2: Quick Links Sidebar -->
         <div class="profile-sidebar-col">
           <div class="nav-card">
-            <h3 class="nav-card-title">{{ locale === 'ar' ? 'روابط الحساب السريعة' : 'Account Quick Links' }}</h3>
+            <h3 class="nav-card-title">{{ t('profile.quickLinksTitle') }}</h3>
             <div class="nav-links-list">
               <router-link to="/addresses" class="nav-link-btn">
                 <div class="link-label-box">
                   <MapPin :size="18" class="link-ico" />
                   <div>
                     <strong>{{ t('nav.addresses') }}</strong>
-                    <span>{{ locale === 'ar' ? 'إدارة الفروع ومواقع الاستلام' : 'Manage branches & storage hubs' }}</span>
+                    <span>{{ t('profile.branchesTitle') }}</span>
                   </div>
                 </div>
                 <ChevronRight :size="16" class="arrow-icon" />
@@ -555,7 +499,7 @@ const avatarInitial = computed(() => {
                   <FileText :size="18" class="link-ico" />
                   <div>
                     <strong>{{ t('nav.orders') }}</strong>
-                    <span>{{ locale === 'ar' ? 'تتبع الشحنات والفواتير الضريبية' : 'Track shipments & download tax receipts' }}</span>
+                    <span>{{ t('profile.ordersTrackTitle') }}</span>
                   </div>
                 </div>
                 <ChevronRight :size="16" class="arrow-icon" />
@@ -566,7 +510,7 @@ const avatarInitial = computed(() => {
                   <ShieldCheck :size="18" class="link-ico" />
                   <div>
                     <strong>{{ t('nav.favorites') }}</strong>
-                    <span>{{ locale === 'ar' ? 'إعادة طلب الأدوية المتكررة' : 'Quick weekly formulation reordering' }}</span>
+                    <span>{{ t('profile.reorderTitle') }}</span>
                   </div>
                 </div>
                 <ChevronRight :size="16" class="arrow-icon" />
@@ -576,13 +520,13 @@ const avatarInitial = computed(() => {
 
           <!-- Help Desk Card -->
           <div class="support-card">
-            <div class="support-badge">{{ locale === 'ar' ? 'دعم الصيادلة والعملاء' : 'Customer & Pharmacist Care' }}</div>
-            <h4 class="support-title">{{ locale === 'ar' ? 'هل تحتاج إلى مساعدة؟' : 'Need Help or Verification?' }}</h4>
+            <div class="support-badge">{{ t('profile.careTitle') }}</div>
+            <h4 class="support-title">{{ t('profile.needHelpTitle') }}</h4>
             <p class="support-sub">
-              {{ locale === 'ar' ? 'فريق خدمة العملاء والعمليات الصيدلانية متاح على مدار الساعة للإجابة على استفساراتك وتحديث بياناتك.' : 'Our pharmacist operations team is available around the clock to assist you with orders and inquiries.' }}
+              {{ t('profile.careDesc') }}
             </p>
             <a href="mailto:support@drugza.com" class="support-contact-btn">
-              <span>{{ locale === 'ar' ? 'تواصل مع الدعم الفني' : 'Contact Support Desk' }}</span>
+              <span>{{ t('profile.contactSupportBtn') }}</span>
               <ArrowRight :size="16" class="arrow-icon" />
             </a>
           </div>

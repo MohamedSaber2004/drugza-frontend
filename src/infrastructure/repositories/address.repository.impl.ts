@@ -8,7 +8,7 @@ export class AddressRepositoryImpl implements IAddressRepository {
   constructor(private http: IHttpClient) {}
 
   async getAddresses(): Promise<Address[]> {
-    const raw = await this.http.get<any[]>('/api/Addresses');
+    const raw = await this.http.get<any>('/api/Addresses');
     const list: AddressApiDto[] = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toAddress);
   }

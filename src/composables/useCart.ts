@@ -67,7 +67,7 @@ function getUserId(): string | null {
 
 export function useCart() {
   const toast = useToast();
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
 
   function persist() {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items.value));
@@ -157,7 +157,7 @@ export function useCart() {
     for (const item of items.value) {
       const key = item.inventoryId || 'default-supplier';
       if (!groups[key]) {
-        const defaultName = locale.value === 'ar' ? 'مستودع دراجزا المركزي' : 'Drugza Central Warehouse';
+        const defaultName = t('cart.defaultCentralWarehouse');
         groups[key] = {
           inventoryId: key,
           inventoryName: item.inventoryName || defaultName,
@@ -230,7 +230,7 @@ export function useCart() {
       }
     }
 
-    const defaultName = locale.value === 'ar' ? 'مستودع دراجزا المعتمد' : 'Drugza Authorized Hub';
+    const defaultName = t('cart.defaultAuthorizedHub');
     const serverInvId = resolvedSupplierPrice?.inventoryUserId
       || (isValidGuid(product.inventoryId) ? product.inventoryId : null);
     const invId = serverInvId || product.inventoryId || (product.manufacturer ? `sup-${product.manufacturer}` : 'default-supplier');
@@ -261,16 +261,10 @@ export function useCart() {
     persist();
 
     const prodName = locale.value === 'ar' ? (product.arabicName || product.name) : product.name;
-    if (locale.value === 'ar') {
-      toast.success(
-        quantity === 1
-          ? `تمت إضافة قطعة واحدة من (${prodName}) إلى السلة.`
-          : `تمت إضافة ${quantity} قطع من (${prodName}) إلى السلة.`,
-        'تمت الإضافة للسلة'
-      );
-    } else {
-      toast.success(`Added ${quantity}x ${product.name} to cart.`, 'Item Added');
-    }
+    const msg = quantity === 1
+      ? t('cart.addedSingle', { name: prodName })
+      : t('cart.addedMultiple', { count: quantity, name: prodName });
+    toast.success(msg, t('cart.addedToastTitle'));
 
     // Sync with the backend cart whenever the item can be expressed as a server row
     const userId = getUserId();
@@ -349,11 +343,7 @@ export function useCart() {
     if (item) clearQuantitySync(item);
     items.value = items.value.filter(i => i.id !== itemId);
     persist();
-    toast.info(
-      locale.value === 'ar'
-        ? `تمت إزالة (${prodName}) من سلة المشتريات.`
-        : `${prodName} removed from your cart.`
-    );
+    toast.info(t('cart.removedToast', { name: prodName }));
 
     const userId = getUserId();
     if (userId && prodId) {
@@ -374,6 +364,36 @@ export function useCart() {
     if (!userId) return;
     await pushItemsToServer(userId, items.value);
     await fetchServerCart();
+  }
+
+  function applyPriceUpdates(updates: Array<{
+    productId: string;
+    inventoryId: string;
+    priceId?: string;
+    effectivePrice?: number;
+    originalPrice?: number;
+  }>) {
+    let changed = false;
+    for (const update of updates) {
+      for (const item of items.value) {
+        if (item.productId !== update.productId) continue;
+        if (item.inventoryId !== update.inventoryId) continue;
+        if (update.priceId && update.priceId !== item.priceId) {
+          item.priceId = update.priceId;
+          changed = true;
+        }
+        if (update.effectivePrice != null && Math.abs(item.effectivePrice - update.effectivePrice) > 0.009) {
+          item.effectivePrice = update.effectivePrice;
+          changed = true;
+        }
+        if (update.originalPrice != null && Math.abs(item.originalPrice - update.originalPrice) > 0.009) {
+          item.originalPrice = update.originalPrice;
+          changed = true;
+        }
+      }
+    }
+    if (changed) persist();
+    return changed;
   }
 
   async function clearCart() {
@@ -424,6 +444,7 @@ export function useCart() {
     addItem,
     updateQuantity,
     removeItem,
+    applyPriceUpdates,
     clearCart,
     resetLocalCart,
     openCartDrawer,

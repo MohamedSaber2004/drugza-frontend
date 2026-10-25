@@ -23,7 +23,7 @@ const { t, locale, toggleLocale } = useI18n();
         <span class="sep">&bull;</span>
         <button type="button" class="lang-switch-top-btn" @click="toggleLocale">
           <Globe :size="13" />
-          <span class="lang-label">{{ locale === 'ar' ? 'English' : 'العربية' }}</span>
+          <span class="lang-label">{{ t('topBar.switchLanguage') }}</span>
         </button>
       </div>
     </div>

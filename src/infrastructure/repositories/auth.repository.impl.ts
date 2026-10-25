@@ -41,11 +41,7 @@ export class AuthRepositoryImpl implements IAuthRepository {
       if (data.pharmacyLicense) payload.append('PharmacyLicense', data.pharmacyLicense);
     }
 
-    const res = await this.http.post('/api/Users/register', payload, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    const res = await this.http.post('/api/Users/register', payload);
 
     if (res?.token) {
       const user = EntityMapper.toUserProfile(res);

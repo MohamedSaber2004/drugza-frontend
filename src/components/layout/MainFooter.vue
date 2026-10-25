@@ -87,7 +87,7 @@ onMounted(async () => {
         <!-- Col 4: Modern Communication & Contact Channels -->
         <div class="footer-col contact-col">
           <h4 class="col-heading">{{ t('footer.directContact') }}</h4>
-          <p class="contact-sub">{{ locale === 'ar' ? 'تواصل مباشرة مع مكتب العمليات الصيدلانية الموحد:' : 'Connect with our dedicated pharmaceutical operations desk:' }}</p>
+          <p class="contact-sub">{{ t('footer.contactDeskPrompt') }}</p>
 
           <div class="contact-cards-list">
             <!-- Official Email -->

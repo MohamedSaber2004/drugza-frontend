@@ -228,6 +228,45 @@ function mapBestPriceProduct(item: BackendBestPriceDto): Product {
   };
 }
 
+export function mapSupplierPriceRow(p: any): ProductSupplierPrice {
+  const invName = typeof p.inventoryUser === 'object' && p.inventoryUser !== null
+    ? (p.inventoryUser.bussinesName || p.inventoryUser.fullName || '')
+    : (p.inventoryName || p.inventoryUser || '');
+
+  const effective = p.effectiveSalesPrice ?? p.salesPrice ?? 0;
+  const discount = p.discountRate ?? p.discount ?? 0;
+  let original = p.priceBeforeFlashSale ?? p.salesPrice ?? effective;
+  if (discount > 0 && original <= effective) {
+    original = effective / (1 - discount / 100);
+  }
+
+  return {
+    id: p.priceId || p.productPriceId || p.id,
+    inventoryUserId: p.inventoryUserId || p.inventoryUser?.id || p.inventoryId,
+    inventoryName: invName,
+    salesPrice: ceilPrice(Math.max(original, effective)),
+    discountRate: discount,
+    effectiveSalesPrice: ceilPrice(effective),
+    stockQuantity: p.stockQuantity ?? p.quantity ?? 0,
+    maxQuantity: p.maxQuantity ?? 0,
+    minOrder: p.minOrder ?? 1,
+    isFlashActive: p.isFlashSaleActive || false,
+    deliveryTime: p.deliveryTime || ''
+  };
+}
+
+/**
+ * Uncached live read of sellable supplier rows. Unlike getSupplierPricesForProduct
+ * it propagates request failures so checkout can tell "unavailable" apart from
+ * "verification failed".
+ */
+export async function fetchLiveSupplierPrices(productId: string): Promise<ProductSupplierPrice[]> {
+  if (!productId) return [];
+  const res = await apiClient.get(`/api/ProductPrices/available-by-product/${productId}`);
+  const list = Array.isArray(res.data) ? res.data : [];
+  return list.map(mapSupplierPriceRow);
+}
+
 export const productsService = {
   /**
    * GET /api/Products/GetProducts
@@ -483,32 +522,7 @@ export const productsService = {
           const res = await apiClient.get(`/api/ProductPrices/available-by-product/${productId}`);
           const list = Array.isArray(res.data) ? res.data : [];
           if (list.length > 0) {
-            return list.map((p: any) => {
-              const invName = typeof p.inventoryUser === 'object' && p.inventoryUser !== null
-                ? (p.inventoryUser.bussinesName || p.inventoryUser.fullName || '')
-                : (p.inventoryName || p.inventoryUser || '');
-
-              const effective = p.effectiveSalesPrice ?? p.salesPrice ?? 0;
-              const discount = p.discountRate ?? p.discount ?? 0;
-              let original = p.priceBeforeFlashSale ?? p.salesPrice ?? effective;
-              if (discount > 0 && original <= effective) {
-                original = effective / (1 - discount / 100);
-              }
-
-              return {
-                id: p.priceId || p.productPriceId || p.id,
-                inventoryUserId: p.inventoryUserId || p.inventoryUser?.id || p.inventoryId,
-                inventoryName: invName,
-                salesPrice: ceilPrice(Math.max(original, effective)),
-                discountRate: discount,
-                effectiveSalesPrice: ceilPrice(effective),
-                stockQuantity: p.stockQuantity ?? p.quantity ?? 0,
-                maxQuantity: p.maxQuantity ?? 0,
-                minOrder: p.minOrder ?? 1,
-                isFlashActive: p.isFlashSaleActive || false,
-                deliveryTime: p.deliveryTime || ''
-              };
-            });
+            return list.map(mapSupplierPriceRow);
           }
         } catch {
           // Return empty if endpoint fails

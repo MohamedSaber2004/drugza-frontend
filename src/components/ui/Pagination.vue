@@ -25,7 +25,7 @@ const emit = defineEmits<{
   (e: 'change', page: number): void;
 }>();
 
-const { locale, isRtl } = useI18n();
+const { t, locale, isRtl } = useI18n();
 
 const totalPages = computed(
   () => Math.max(1, Math.ceil(props.totalItems / props.pageSize)) + (props.hasMore ? 1 : 0)
@@ -89,11 +89,8 @@ function changePage(page: number | string) {
   <div v-if="totalPages > 1 || totalItems > 0" class="drugza-pagination-wrapper">
     <!-- Items Counter Summary -->
     <div class="pagination-summary">
-      <span v-if="locale === 'ar'">
-        عرض <strong>{{ startItemIndex }}-{{ endItemIndex }}</strong> من إجمالي <strong>{{ totalItems }}{{ hasMore ? '+' : '' }}</strong> {{ itemLabel || 'عنصر' }}
-      </span>
-      <span v-else>
-        Showing <strong>{{ startItemIndex }}-{{ endItemIndex }}</strong> of <strong>{{ totalItems }}{{ hasMore ? '+' : '' }}</strong> {{ itemLabel || 'items' }}
+      <span>
+        {{ t('common.showingItems') }} <strong>{{ startItemIndex }}-{{ endItemIndex }}</strong> {{ t('common.ofTotal') }} <strong>{{ totalItems }}{{ hasMore ? '+' : '' }}</strong> {{ itemLabel || t('common.itemLabelDefault') }}
       </span>
     </div>
 
@@ -104,7 +101,7 @@ function changePage(page: number | string) {
         type="button"
         class="page-nav-btn edge-btn"
         :disabled="modelValue === 1"
-        :title="locale === 'ar' ? 'الصفحة الأولى' : 'First page'"
+        :title="t('common.firstPage')"
         @click="changePage(1)"
       >
         <component :is="isRtl ? ChevronsRight : ChevronsLeft" :size="16" />
@@ -115,11 +112,11 @@ function changePage(page: number | string) {
         type="button"
         class="page-nav-btn prev-btn"
         :disabled="modelValue === 1"
-        :title="locale === 'ar' ? 'الصفحة السابقة' : 'Previous page'"
+        :title="t('common.prevPage')"
         @click="changePage(modelValue - 1)"
       >
         <component :is="isRtl ? ChevronRight : ChevronLeft" :size="16" />
-        <span class="btn-text">{{ locale === 'ar' ? 'السابق' : 'Prev' }}</span>
+        <span class="btn-text">{{ t('common.prev') }}</span>
       </button>
 
       <!-- Page Numbers -->
@@ -149,10 +146,10 @@ function changePage(page: number | string) {
         type="button"
         class="page-nav-btn next-btn"
         :disabled="modelValue === totalPages"
-        :title="locale === 'ar' ? 'الصفحة التالية' : 'Next page'"
+        :title="t('common.nextPage')"
         @click="changePage(modelValue + 1)"
       >
-        <span class="btn-text">{{ locale === 'ar' ? 'التالي' : 'Next' }}</span>
+        <span class="btn-text">{{ t('common.next') }}</span>
         <component :is="isRtl ? ChevronLeft : ChevronRight" :size="16" />
       </button>
 
@@ -161,7 +158,7 @@ function changePage(page: number | string) {
         type="button"
         class="page-nav-btn edge-btn"
         :disabled="modelValue === totalPages"
-        :title="locale === 'ar' ? 'الصفحة الأخيرة' : 'Last page'"
+        :title="t('common.lastPage')"
         @click="changePage(totalPages)"
       >
         <component :is="isRtl ? ChevronsLeft : ChevronsRight" :size="16" />

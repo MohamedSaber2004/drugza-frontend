@@ -8,7 +8,7 @@ export class ProductRepositoryImpl implements IProductRepository {
   constructor(private http: IHttpClient) {}
 
   async getProducts(params?: ProductQueryParams): Promise<Product[]> {
-    const raw = await this.http.get<any[]>('/api/Products', {
+    const raw = await this.http.get<any>('/api/Products', {
       params: {
         lang: params?.lang ?? 1,
         search: params?.search,
@@ -30,19 +30,19 @@ export class ProductRepositoryImpl implements IProductRepository {
   }
 
   async getPopularProducts(): Promise<Product[]> {
-    const raw = await this.http.get<any[]>('/api/Products/popular');
+    const raw = await this.http.get<any>('/api/Products/popular');
     const list = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toProduct);
   }
 
   async getFlashSaleProducts(): Promise<Product[]> {
-    const raw = await this.http.get<any[]>('/api/Products/flash-sales');
+    const raw = await this.http.get<any>('/api/Products/flash-sales');
     const list = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toProduct);
   }
 
   async searchProducts(query: string): Promise<Product[]> {
-    const raw = await this.http.get<any[]>('/api/Products/search', {
+    const raw = await this.http.get<any>('/api/Products/search', {
       params: { q: query }
     });
     const list = Array.isArray(raw) ? raw : (raw?.items || []);
@@ -50,19 +50,19 @@ export class ProductRepositoryImpl implements IProductRepository {
   }
 
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
-    const raw = await this.http.get<any[]>(`/api/Products/by-category/${categoryId}`);
+    const raw = await this.http.get<any>(`/api/Products/by-category/${categoryId}`);
     const list = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toProduct);
   }
 
   async getProductsByProvider(providerId: string): Promise<Product[]> {
-    const raw = await this.http.get<any[]>(`/api/Products/by-provider/${providerId}`);
+    const raw = await this.http.get<any>(`/api/Products/by-provider/${providerId}`);
     const list = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toProduct);
   }
 
   async getProductsByBrand(brandId: number): Promise<Product[]> {
-    const raw = await this.http.get<any[]>(`/api/Products/by-brand/${brandId}`);
+    const raw = await this.http.get<any>(`/api/Products/by-brand/${brandId}`);
     const list = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toProduct);
   }

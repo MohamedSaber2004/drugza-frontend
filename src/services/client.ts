@@ -30,13 +30,18 @@ export function getImageUrl(path?: string | null, type: 'product' | 'category' |
   ) {
     return getPlaceholder(type);
   }
-  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+  if (
+    clean.startsWith('http://') ||
+    clean.startsWith('https://') ||
+    clean.startsWith('blob:') ||
+    clean.startsWith('data:')
+  ) {
     return clean;
   }
   if (clean.startsWith('/api/files/') || clean.startsWith('api/files/')) {
     return `${API_BASE_URL}/${clean.replace(/^\//, '')}`;
   }
-  if (clean.startsWith('/Uploads/') || clean.startsWith('Uploads/')) {
+  if (clean.toLowerCase().startsWith('/uploads/') || clean.toLowerCase().startsWith('uploads/')) {
     return `${API_BASE_URL}/${clean.replace(/^\//, '')}`;
   }
   return `${API_BASE_URL}/api/files/${clean.replace(/^\//, '')}`;

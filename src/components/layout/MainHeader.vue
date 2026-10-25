@@ -75,7 +75,7 @@ const displayName = computed(() => {
   const full = user.value.fullName?.trim();
   const userN = user.value.userName?.trim();
   const bus = user.value.businessName?.trim();
-  return full || userN || bus || (locale.value === 'ar' ? 'صيدلي معتمد' : 'Pharmacist');
+  return full || userN || bus || t('header.pharmacistBadge');
 });
 
 const pharmacyName = computed(() => {
@@ -90,11 +90,11 @@ const pharmacyName = computed(() => {
   // Otherwise, show the role text without duplicating the name
   const role = user.value.role;
   if (role) {
-    return locale.value === 'ar' && (role === 'Pharmacy' || role.toLowerCase() === 'pharmacy')
-      ? 'صيدلية مرخصة'
+    return (role === 'Pharmacy' || role.toLowerCase() === 'pharmacy')
+      ? t('header.licensedPharmacyBadge')
       : role;
   }
-  return locale.value === 'ar' ? 'صيدلية مرخصة' : 'Licensed Pharmacy';
+  return t('header.licensedPharmacyBadge');
 });
 
 const avatarInitial = computed(() => {
@@ -153,22 +153,22 @@ onUnmounted(() => {
         <button
           type="button"
           class="action-icon-btn mobile-search-icon-btn"
-          :title="locale === 'ar' ? 'بحث' : 'Search'"
+          :title="t('common.search')"
           @click="emit('open-search')"
         >
           <Search :size="20" />
-          <span class="icon-label">{{ locale === 'ar' ? 'بحث' : 'Search' }}</span>
+          <span class="icon-label">{{ t('common.search') }}</span>
         </button>
 
         <!-- Language Switcher Button -->
         <button
           type="button"
           class="action-icon-btn lang-btn"
-          :title="locale === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'"
+          :title="t('header.switchLanguageFull')"
           @click="toggleLocale"
         >
           <Globe :size="20" class="lang-icon" />
-          <span class="icon-label">{{ locale === 'ar' ? 'English' : 'العربية' }}</span>
+          <span class="icon-label">{{ t('topBar.switchLanguage') }}</span>
         </button>
 
         <!-- Wishlist / Favorites Dedicated Page Link -->
@@ -243,7 +243,7 @@ onUnmounted(() => {
                 <div class="dropdown-user-meta">
                   <strong class="meta-name" :title="displayName">{{ displayName }}</strong>
                   <span v-if="pharmacyName && pharmacyName !== displayName" class="dropdown-business" :title="pharmacyName">{{ pharmacyName }}</span>
-                  <span class="dropdown-email" :title="user.email || ''">{{ user.email || (locale === 'ar' ? 'البريد غير متوفر' : 'No email') }}</span>
+                  <span class="dropdown-email" :title="user.email || ''">{{ user.email || t('header.noEmail') }}</span>
                 </div>
               </div>
             </div>
@@ -297,10 +297,10 @@ onUnmounted(() => {
           type="button"
           class="mobile-lang-quick-btn"
           @click="toggleLocale"
-          :title="locale === 'ar' ? 'English' : 'عربي'"
+          :title="t('header.switchLanguageTarget')"
         >
           <Globe :size="16" />
-          <span>{{ locale === 'ar' ? 'EN' : 'عربي' }}</span>
+          <span>{{ t('header.switchLanguageCode') }}</span>
         </button>
 
         <!-- Mobile Menu Toggle Button (Hamburger / Close) -->
@@ -375,7 +375,7 @@ onUnmounted(() => {
             type="button"
             class="sidebar-close-btn"
             @click="isMobileMenuOpen = false"
-            :aria-label="locale === 'ar' ? 'إغلاق القائمة' : 'Close menu'"
+            :aria-label="t('header.closeMenu')"
           >
             <X :size="20" />
           </button>
@@ -399,8 +399,8 @@ onUnmounted(() => {
               <User :size="20" />
             </div>
             <div class="guest-info">
-              <strong>{{ locale === 'ar' ? 'بوابة الصيادلة والمستودعات' : 'Pharmacist & Supplier Portal' }}</strong>
-              <span>{{ locale === 'ar' ? 'سجل دخولك لتصفح الأسعار والشحن المباشر' : 'Sign in to access B2B pricing & express shipping' }}</span>
+              <strong>{{ t('header.pharmacistPortal') }}</strong>
+              <span>{{ t('header.portalSubtitle') }}</span>
             </div>
           </div>
 
@@ -412,7 +412,7 @@ onUnmounted(() => {
 
           <!-- Section: Main Menu -->
           <div class="sidebar-nav-group">
-            <span class="group-title">{{ locale === 'ar' ? 'التصفح والتسوق' : 'Marketplace' }}</span>
+            <span class="group-title">{{ t('header.marketplaceNav') }}</span>
             <div class="mobile-nav-links">
               <button
                 class="mobile-nav-item"
@@ -463,7 +463,7 @@ onUnmounted(() => {
 
           <!-- Section: Account & Management -->
           <div class="sidebar-nav-group">
-            <span class="group-title">{{ locale === 'ar' ? 'حساب الصيدلية والإدارة' : 'Pharmacy Account' }}</span>
+            <span class="group-title">{{ t('header.pharmacyAccountNav') }}</span>
             <div class="mobile-nav-links">
               <button
                 class="mobile-nav-item"
@@ -507,7 +507,7 @@ onUnmounted(() => {
           <!-- Language Switch in Mobile Menu -->
           <button type="button" class="mobile-lang-drawer-btn" @click="toggleLocale">
             <Globe :size="18" />
-            <span>{{ locale === 'ar' ? 'English (Switch to English)' : 'اللغة العربية (التحويل للعربية)' }}</span>
+            <span>{{ t('header.switchLanguageFull') }}</span>
           </button>
         </div>
 

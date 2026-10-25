@@ -20,11 +20,11 @@ const props = withDefaults(defineProps<Props>(), {
   fullContainer: false
 });
 
-const { locale } = useI18n();
+const { t } = useI18n();
 
 const defaultText = computed(() => {
   if (props.text) return props.text;
-  return locale.value === 'ar' ? 'جاري تحميل البيانات...' : 'Loading data...';
+  return t('common.loadingData');
 });
 
 const blurAmount = computed(() => {

@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { useI18n } from '@/composables/useI18n';
 import type { Address } from '@/types';
 
 export interface BackendAddressDto {
@@ -63,6 +64,7 @@ export interface CountryDto {
 }
 
 export function mapBackendAddress(a: BackendAddressDto, idx: number): Address {
+  const { t } = useI18n();
   const cityObj = a.area?.city;
   const cityName = cityObj?.arabicName || cityObj?.name || '';
   const areaName = a.area?.arabicName || a.area?.name || '';
@@ -71,7 +73,7 @@ export function mapBackendAddress(a: BackendAddressDto, idx: number): Address {
 
   return {
     id: a.id,
-    title: idx === 0 ? 'الفرع الرئيسي' : `فرع الصيدلية #${idx + 1}`,
+    title: idx === 0 ? t('addresses.defaultMainBranch') : t('addresses.defaultBranchNumbered', { num: idx + 1 }),
     cityId,
     cityName,
     areaId,
@@ -150,6 +152,7 @@ export const addressService = {
    */
   async createAddress(data: CreateAddressDto) {
     const res = await apiClient.post('/api/Address/insert-address', {
+      userId: data.userId,
       addressLine: data.addressLine,
       areaId: data.areaId || 1,
       latitude: data.latitude != null ? data.latitude : undefined,
@@ -187,17 +190,24 @@ export const addressService = {
 
   /**
    * GET /api/Address/GetShippingFess/{addressId}
+   * Returns null when the fee cannot be resolved so callers can distinguish
+   * "not calculated yet" from a genuine zero (free shipping).
    */
-  async getShippingFees(addressId: string): Promise<number> {
+  async getShippingFees(addressId: string): Promise<number | null> {
     try {
       const res = await apiClient.get(`/api/Address/GetShippingFess/${addressId}`);
-      if (typeof res.data === 'number') return res.data;
-      if (res.data?.shippingFees != null) return Number(res.data.shippingFees);
-      if (res.data?.fee != null) return Number(res.data.fee);
+      const raw = res.data;
+      const value =
+        typeof raw === 'number' ? raw
+          : raw?.shippingFees != null ? Number(raw.shippingFees)
+            : raw?.shippingFee != null ? Number(raw.shippingFee)
+              : raw?.fee != null ? Number(raw.fee)
+                : raw?.data != null ? Number(raw.data)
+                  : null;
+      return value != null && Number.isFinite(value) ? value : null;
     } catch {
-      // Fallback
+      return null;
     }
-    return 0;
   },
 
   /**

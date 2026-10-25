@@ -73,7 +73,7 @@ const totalStock = computed(() => {
 const suppliersLabel = computed(() => {
   const count = supplierPrices.value.length;
   if (count === 1) {
-    return locale.value === 'ar' ? 'متوفر من مستودع موثوق واحد' : 'Available from 1 verified warehouse';
+    return t('common.singleWarehouse');
   }
   return t('products.suppliersAvailable', { count });
 });
@@ -87,7 +87,7 @@ const providerNames = computed(() =>
 
 const fallbackProviderName = computed(() =>
   product.value?.inventoryName?.trim()
-    || (locale.value === 'ar' ? 'مستودع أدوية معتمد' : 'Authorized Provider')
+    || t('common.authorizedProvider')
 );
 
 onMounted(() => {
@@ -164,21 +164,13 @@ function handleAddSupplierItem(priceRow: ProductSupplierPrice) {
   if (!product.value) return;
   const qty = quantities.value[priceRow.id] || 1;
   addItem(product.value, qty, priceRow);
-  toast.success(
-    locale.value === 'ar'
-      ? `تمت إضافة ${qty} عبوة من مورد "${priceRow.inventoryName}" إلى العربة`
-      : `Added ${qty} units from "${priceRow.inventoryName}" to cart`
-  );
+  toast.success(t('productDetail.addedFromWarehouse', { qty, warehouse: priceRow.inventoryName }));
 }
 
 function handleAddDirect() {
   if (!product.value) return;
   addItem(product.value, directQuantity.value);
-  toast.success(
-    locale.value === 'ar'
-      ? `تمت إضافة ${directQuantity.value} عبوة إلى عربة المشتريات`
-      : `Added ${directQuantity.value} units to cart`
-  );
+  toast.success(t('productDetail.addedDirect', { qty: directQuantity.value }));
 }
 
 function handleToggleFav() {
@@ -190,9 +182,7 @@ function handleToggleFav() {
 function copyShareLink() {
   if (navigator?.clipboard) {
     navigator.clipboard.writeText(window.location.href);
-    toast.success(
-      locale.value === 'ar' ? 'تم نسخ رابط الصنف إلى الحافظة' : 'Product link copied to clipboard'
-    );
+    toast.success(t('productDetail.linkCopied'));
   }
 }
 </script>
@@ -237,10 +227,10 @@ function copyShareLink() {
       <div v-else-if="!product" class="product-not-found">
         <AlertCircle :size="56" class="not-found-icon" />
         <h2 class="not-found-title">
-          {{ locale === 'ar' ? 'لم يتم العثور على المستحضر المطلوب' : 'Product Not Found' }}
+          {{ t('productDetail.notFoundTitle') }}
         </h2>
         <p class="not-found-text">
-          {{ locale === 'ar' ? 'قد يكون هذا الدواء غير متوفر حالياً أو تم تعديل كود الصنف.' : 'The requested medicine is either not cataloged or currently unavailable.' }}
+          {{ t('productDetail.notFoundDesc') }}
         </p>
         <router-link to="/catalog">
           <Button variant="cta" size="lg">
@@ -267,7 +257,7 @@ function copyShareLink() {
                   -{{ bestDiscount }}%
                 </Badge>
                 <Badge v-if="product.isFlashSale" variant="warning" class="flash-pill">
-                  🔥 {{ locale === 'ar' ? 'عرض فوري' : 'Flash Sale' }}
+                  🔥 {{ t('common.flashSaleBadge') }}
                 </Badge>
               </div>
             </div>
@@ -295,7 +285,7 @@ function copyShareLink() {
               <div>
                 <strong class="trust-title">{{ t('hero.edaCertified') }}</strong>
                 <p class="trust-desc">
-                  {{ locale === 'ar' ? 'مستحضر طبي مرخص خاضع لنظام التتبع الدوائي المصري ومخزن في مستودعات مبردة GDP.' : 'Certified pharmaceutical batch fully monitored under EDA guidelines.' }}
+                  {{ t('productDetail.edaNotice') }}
                 </p>
               </div>
             </div>
@@ -306,7 +296,7 @@ function copyShareLink() {
             <!-- Category and SKU Bar -->
             <div class="info-top-row">
               <span class="category-tag">
-                {{ (locale === 'ar' ? product.categoryArabicName : product.categoryName) || product.categoryName || (locale === 'ar' ? 'مستحضر دوائي' : 'Pharmaceutical') }}
+                {{ (locale === 'ar' ? product.categoryArabicName : product.categoryName) || product.categoryName || t('common.pharmaceutical') }}
               </span>
               <span v-if="product.productCode" class="sku-tag">
                 SKU: {{ product.productCode }}
@@ -351,13 +341,13 @@ function copyShareLink() {
               <div class="stock-side">
                 <div class="stock-pill" :class="totalStock > 0 ? 'in-stock' : 'out-stock'">
                   <span class="pulse-dot"></span>
-                  <span>{{ totalStock > 0 ? `${totalStock} ${t('productDetailModal.units')}` : (locale === 'ar' ? 'غير متوفر' : 'Out of Stock') }}</span>
+                  <span>{{ totalStock > 0 ? `${totalStock} ${t('productDetailModal.units')}` : t('common.outOfStock') }}</span>
                 </div>
                 <span class="providers-count-hint" v-if="supplierPrices.length > 0">
                   {{ suppliersLabel }}
                 </span>
                 <span class="providers-names" v-if="supplierPrices.length > 0">
-                  {{ locale === 'ar' ? 'الموردون: ' : 'Providers: ' }}{{ providerNames }}
+                  {{ t('productDetail.providersLabel') }}{{ providerNames }}
                 </span>
               </div>
             </div>
@@ -373,7 +363,7 @@ function copyShareLink() {
                 <strong class="spec-v">{{ product.strength || '-' }}</strong>
               </div>
               <div class="spec-cell">
-                <span class="spec-k">{{ locale === 'ar' ? 'طريقة الاستخدام' : 'Route' }}</span>
+                <span class="spec-k">{{ t('productDetail.routeLabel') }}</span>
                 <strong class="spec-v">{{ product.route || '-' }}</strong>
               </div>
               <div class="spec-cell">
@@ -424,7 +414,7 @@ function copyShareLink() {
                 type="button"
                 class="fav-circle-btn"
                 :class="{ 'is-fav': isFavorite(product.id) }"
-                :title="isFavorite(product.id) ? (locale === 'ar' ? 'إزالة من المفضلة' : 'Remove from favorites') : (locale === 'ar' ? 'إضافة إلى المفضلة' : 'Add to favorites')"
+                :title="isFavorite(product.id) ? t('favorites.removeTooltip') : t('favorites.addTooltip')"
                 @click="handleToggleFav"
               >
                 <Heart
@@ -437,7 +427,7 @@ function copyShareLink() {
               <button
                 type="button"
                 class="share-circle-btn"
-                :title="locale === 'ar' ? 'مشاركة رابط الصنف' : 'Share product link'"
+                :title="t('common.shareLink')"
                 @click="copyShareLink"
               >
                 <Share2 :size="18" />
@@ -467,7 +457,7 @@ function copyShareLink() {
             @click="activeTab = 'alternatives'"
           >
             <Layers :size="16" />
-            <span>{{ locale === 'ar' ? 'المثائل والبدائل المتطابقة' : 'Generic Substitutes' }}</span>
+            <span>{{ t('productDetail.genericSubstitutesTitle') }}</span>
             <span class="tab-badge-counter">{{ alternatives.length }}</span>
           </button>
         </div>
@@ -476,9 +466,9 @@ function copyShareLink() {
         <div v-if="activeTab === 'suppliers'" class="p-tab-panel">
           <div class="suppliers-section-header">
             <div>
-              <h3 class="panel-heading">{{ locale === 'ar' ? 'مستودعات التوزيع المعتمدة المتاح لديها هذا الصنف' : 'Certified Wholesale Warehouses Stocking This Product' }}</h3>
+              <h3 class="panel-heading">{{ t('productDetail.providersStockingTitle') }}</h3>
               <p class="panel-sub">
-                {{ locale === 'ar' ? 'قارن الأسعار ونسب الخصم واطلب مباشرة من المستودع المناسب لاحتياجات صيدليتك.' : 'Compare live prices, volumetric discounts, and add directly from your preferred warehouse.' }}
+                {{ t('productDetail.providersStockingDesc') }}
               </p>
             </div>
           </div>
@@ -504,7 +494,7 @@ function copyShareLink() {
                       <strong class="sup-title">{{ priceRow.inventoryName }}</strong>
                       <span class="delivery-pill">
                         <Truck :size="12" />
-                        {{ priceRow.deliveryTime || (locale === 'ar' ? 'توصيل مبرد سريع' : 'Express Delivery') }}
+                        {{ priceRow.deliveryTime || t('common.expressDelivery') }}
                       </span>
                     </div>
                   </td>
@@ -553,7 +543,7 @@ function copyShareLink() {
                       <strong class="sup-title">{{ fallbackProviderName }}</strong>
                       <span class="delivery-pill">
                         <Truck :size="12" />
-                        {{ locale === 'ar' ? 'توصيل مبرد سريع' : 'Express Delivery' }}
+                        {{ t('common.expressDelivery') }}
                       </span>
                     </div>
                   </td>
@@ -612,7 +602,7 @@ function copyShareLink() {
                   <strong class="m-sup-name">{{ priceRow.inventoryName }}</strong>
                   <span class="delivery-pill">
                     <Truck :size="12" />
-                    {{ priceRow.deliveryTime || (locale === 'ar' ? 'توصيل مبرد' : 'Express') }}
+                    {{ priceRow.deliveryTime || t('common.expressDelivery') }}
                   </span>
                 </div>
                 <span class="discount-tag-pill">{{ priceRow.discountRate }}%</span>
@@ -643,7 +633,7 @@ function copyShareLink() {
                   <strong class="m-sup-name">{{ fallbackProviderName }}</strong>
                   <span class="delivery-pill">
                     <Truck :size="12" />
-                    {{ locale === 'ar' ? 'توصيل مبرد' : 'Express' }}
+                    {{ t('common.expressDelivery') }}
                   </span>
                 </div>
                 <span v-if="product.discountRate" class="discount-tag-pill">{{ product.discountRate }}%</span>
@@ -672,8 +662,8 @@ function copyShareLink() {
         <!-- Tab 2: Alternatives Grid -->
         <div v-else-if="activeTab === 'alternatives'" class="p-tab-panel">
           <div class="alternatives-header">
-            <h3 class="panel-heading">{{ locale === 'ar' ? 'المثائل والبدائل الصيدلانية المطابقة' : 'Generic Pharmaceutical Substitutes' }}</h3>
-            <p class="panel-sub">{{ locale === 'ar' ? 'أدوية بديلة بنفس المادة الفعالة أو التصنيف العلاجي تمكنك من تلبية احتياجات مرضاك دون انقطاع.' : 'Therapeutically equivalent products with identical formulation.' }}</p>
+            <h3 class="panel-heading">{{ t('productDetail.genericSubstitutesTitle') }}</h3>
+            <p class="panel-sub">{{ t('productDetail.genericSubstitutesDesc') }}</p>
           </div>
 
           <div v-if="alternatives.length > 0" class="alternatives-catalog-grid">

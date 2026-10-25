@@ -29,7 +29,7 @@ const cartQuantity = computed(() => cartItem.value?.quantity || 0);
 const suppliersLabel = computed(() => {
   const count = props.product.suppliersCount || 0;
   if (count === 1) {
-    return locale.value === 'ar' ? 'متوفر من مستودع موثوق واحد' : 'Available from 1 verified warehouse';
+    return t('common.singleWarehouse');
   }
   return t('products.suppliersAvailable', { count });
 });
@@ -67,7 +67,7 @@ function onToggleFav() {
           -{{ product.discountRate }}%
         </Badge>
         <Badge v-if="product.isFlashSale" variant="warning">
-          🔥 {{ locale === 'ar' ? 'عرض فوري' : 'Flash Sale' }}
+          🔥 {{ t('common.flashSaleBadge') }}
         </Badge>
       </div>
 
@@ -136,7 +136,7 @@ function onToggleFav() {
       <div
         v-if="product.activeIngredient"
         class="active-ingredient-chip"
-        :title="locale === 'ar' ? 'عرض بدائل بنفس المادة الفعالة' : 'View substitute medicines with same active ingredient'"
+        :title="t('productDetail.viewSubstitutesTooltip')"
         @click.stop="emit('view-alternatives', product.activeIngredientId || '')"
       >
         <Layers :size="12" />
@@ -168,7 +168,7 @@ function onToggleFav() {
             type="button"
             class="card-step-btn"
             @click.stop="onDecrement"
-            :title="locale === 'ar' ? 'إنقاص قطعة واحدة' : 'Decrease 1 piece'"
+            :title="t('cart.decreasePiece')"
           >
             <Minus :size="13" />
           </button>
@@ -177,7 +177,7 @@ function onToggleFav() {
             type="button"
             class="card-step-btn"
             @click.stop="onIncrement"
-            :title="locale === 'ar' ? 'إضافة قطعة واحدة' : 'Add 1 piece'"
+            :title="t('cart.increasePiece')"
           >
             <Plus :size="13" />
           </button>

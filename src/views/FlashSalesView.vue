@@ -79,7 +79,7 @@ async function loadFlashProducts() {
 const providersList = computed(() => {
   const map = new Map<string, { id: string; name: string; count: number }>();
   for (const p of products.value) {
-    const rawName = p.inventoryName || (locale.value === 'ar' ? 'مستودع معتمد' : 'Verified Warehouse');
+    const rawName = p.inventoryName || t('flashSales.verifiedWarehouse');
     const name = rawName.trim();
     const id = (p.inventoryId || name).trim();
     if (!map.has(name)) {
@@ -166,7 +166,7 @@ function resetFilters() {
       <nav class="breadcrumb-row">
         <router-link to="/">{{ t('nav.home') }}</router-link>
         <ChevronRight :size="14" class="arrow-icon" :class="{ 'rtl-flip': isRtl }" />
-        <span class="current">{{ locale === 'ar' ? 'عروض الخصم والتخفيضات الفورية' : 'Flash Sale Deals' }}</span>
+        <span class="current">{{ t('flashSales.breadcrumbCurrent') }}</span>
       </nav>
 
       <!-- Flash Sale Hero Banner -->
@@ -174,35 +174,31 @@ function resetFilters() {
         <div class="banner-content">
           <div class="pill-fire-badge">
             <Flame :size="18" class="flame-icon animate-pulse" />
-            <span>{{ locale === 'ar' ? 'عروض الخصم الحصرية لفترة محدودة' : 'EXCLUSIVE FLASH SALE' }}</span>
+            <span>{{ t('flashSales.badge') }}</span>
           </div>
 
           <h1 class="flash-hero-title">
-            {{ locale === 'ar' ? 'خصومات المستودعات الدوائية الكبرى' : 'Wholesale Flash Discounts' }}
-            <span class="highlight-text">{{ locale === 'ar' ? `تصل إلى ${maxDiscount}%` : `Up to ${maxDiscount}% Off` }}</span>
+            {{ t('flashSales.heroTitle') }}
+            <span class="highlight-text">{{ t('flashSales.upToDiscount', { discount: maxDiscount }) }}</span>
           </h1>
 
           <p class="flash-hero-sub">
-            {{
-              locale === 'ar'
-                ? 'صفقات توريد فورية مباشرة من كبرى شركات التوزيع ومستودعات الأدوية المرخصة في مصر بأقل من أسعار الجملة المعتادة.'
-                : 'Direct wholesale deals from certified pharmaceutical warehouses across Egypt with instant delivery and volume discounts.'
-            }}
+            {{ t('flashSales.subtitleDesc') }}
           </p>
 
           <!-- Feature Trust Badges -->
           <div class="hero-trust-row">
             <span class="trust-badge">
               <Percent :size="14" />
-              <span>{{ locale === 'ar' ? `خصومات حقيقية حتى ${maxDiscount}%` : `Up to ${maxDiscount}% Real Discount` }}</span>
+              <span>{{ t('flashSales.realDiscount', { discount: maxDiscount }) }}</span>
             </span>
             <span class="trust-badge">
               <Truck :size="14" />
-              <span>{{ locale === 'ar' ? 'شحن فوري ومباشر' : 'Direct Fast Shipping' }}</span>
+              <span>{{ t('flashSales.directFastShipping') }}</span>
             </span>
             <span class="trust-badge">
               <ShieldCheck :size="14" />
-              <span>{{ locale === 'ar' ? 'أدوية موثقة من هيئة الدواء' : 'EDA Verified Products' }}</span>
+              <span>{{ t('flashSales.edaVerifiedProducts') }}</span>
             </span>
           </div>
         </div>
@@ -211,7 +207,7 @@ function resetFilters() {
         <div class="countdown-card">
           <div class="countdown-top-header">
             <Sparkles :size="15" class="sparkle-icon" />
-            <span>{{ products.length > 0 ? t('flashSale.countdownLabel') : (locale === 'ar' ? 'حالة عروض الفلاش سيل' : 'Flash Sale Status') }}</span>
+            <span>{{ products.length > 0 ? t('flashSale.countdownLabel') : t('flashSales.statusBadge') }}</span>
           </div>
 
           <div v-if="products.length > 0" class="countdown-digits-grid">
@@ -232,13 +228,13 @@ function resetFilters() {
           </div>
           <div v-else class="no-active-notice">
             <Flame :size="24" class="no-active-fire" />
-            <p>{{ locale === 'ar' ? 'لا توجد عروض نشطة حالياً' : 'No active flash deals currently' }}</p>
-            <span class="no-active-sub">{{ locale === 'ar' ? 'ترقبوا الإطلاق القادم قريباً' : 'Next drop coming soon' }}</span>
+            <p>{{ t('flashSales.noDealsTitle') }}</p>
+            <span class="no-active-sub">{{ t('flashSales.noDealsSub') }}</span>
           </div>
 
           <div class="deals-counter-bar">
-            <span>{{ locale === 'ar' ? `إجمالي العروض النشطة:` : 'Active Deals:' }}</span>
-            <strong>{{ products.length }} {{ locale === 'ar' ? 'صنف مخفض' : 'products' }}</strong>
+            <span>{{ t('flashSales.activeDealsLabel') }}</span>
+            <strong>{{ t('flashSales.discountedCount', { count: products.length }) }}</strong>
           </div>
         </div>
       </section>
@@ -251,7 +247,7 @@ function resetFilters() {
           <input
             v-model="searchQuery"
             type="text"
-            :placeholder="locale === 'ar' ? 'ابحث في العروض باسم الدواء أو المادة الفعالة...' : 'Search deals by medicine name or molecule...'"
+            :placeholder="t('flashSales.searchPlaceholder')"
             class="filter-input"
           />
           <button v-if="searchQuery" type="button" class="clear-btn" @click="searchQuery = ''">
@@ -263,10 +259,10 @@ function resetFilters() {
         <div class="sort-box">
           <SlidersHorizontal :size="15" class="sort-ico" />
           <select v-model="selectedSort" class="sort-select">
-            <option value="discount">{{ locale === 'ar' ? 'الأعلى خصماً' : 'Highest Discount' }}</option>
-            <option value="price-asc">{{ locale === 'ar' ? 'الأقل سعراً' : 'Lowest Price' }}</option>
-            <option value="price-desc">{{ locale === 'ar' ? 'الأعلى سعراً' : 'Highest Price' }}</option>
-            <option value="name">{{ locale === 'ar' ? 'اسم الصنف' : 'Product Name' }}</option>
+            <option value="discount">{{ t('flashSales.sortByDiscount') }}</option>
+            <option value="price-asc">{{ t('flashSales.sortByPriceAsc') }}</option>
+            <option value="price-desc">{{ t('flashSales.sortByPriceDesc') }}</option>
+            <option value="name">{{ t('flashSales.sortByName') }}</option>
           </select>
         </div>
       </section>
@@ -275,7 +271,7 @@ function resetFilters() {
       <div v-if="providersList.length > 0" class="providers-chips-row">
         <span class="chips-title">
           <Building2 :size="14" />
-          <span>{{ locale === 'ar' ? 'المستودع الموزع:' : 'Warehouse:' }}</span>
+          <span>{{ t('flashSales.warehouseLabel') }}</span>
         </span>
 
         <div class="chips-scroll">
@@ -285,7 +281,7 @@ function resetFilters() {
             :class="{ active: selectedProvider === 'all' }"
             @click="selectedProvider = 'all'"
           >
-            <span>{{ locale === 'ar' ? 'كافة المستودعات' : 'All Warehouses' }}</span>
+            <span>{{ t('flashSales.allWarehouses') }}</span>
             <span class="count">{{ products.length }}</span>
           </button>
 
@@ -305,7 +301,7 @@ function resetFilters() {
 
       <!-- Active Filter Status Bar -->
       <div v-if="selectedProvider !== 'all' || searchQuery" class="active-chips-strip">
-        <span class="active-label">{{ locale === 'ar' ? 'الفلاتر النشطة:' : 'Active Filters:' }}</span>
+        <span class="active-label">{{ t('common.activeFilters') }}</span>
         <span v-if="selectedProvider !== 'all'" class="filter-chip">
           <Building2 :size="12" />
           {{ selectedProvider }}
@@ -316,7 +312,7 @@ function resetFilters() {
           <X :size="12" class="remove-chip" @click="searchQuery = ''" />
         </span>
         <button type="button" class="reset-link" @click="resetFilters">
-          {{ locale === 'ar' ? 'مسح الفلاتر' : 'Reset Filters' }}
+          {{ t('common.resetFilters') }}
         </button>
       </div>
 
@@ -359,34 +355,22 @@ function resetFilters() {
             <Flame :size="40" />
           </div>
           <template v-if="products.length === 0">
-            <h3>{{ locale === 'ar' ? 'لا توجد عروض تخفيض فوري (Flash Sale) نشطة حالياً' : 'No active flash sale deals at the moment' }}</h3>
-            <p>
-              {{
-                locale === 'ar'
-                  ? 'جميع عروض الفلاش سيل السابقة قد انتهت. يتم إطلاق عروض جديدة وتخفيضات استثنائية مباشرة من كبرى شركات التوزيع ومستودعات الأدوية بانتظام، تابعونا لمعرفة العرض القادم!'
-                  : 'All previous flash deals have ended. New limited-time discounts are released regularly from verified pharmaceutical distributors. Stay tuned!'
-              }}
-            </p>
+            <h3>{{ t('flashSales.emptyAllTitle') }}</h3>
+            <p>{{ t('flashSales.emptyAllDesc') }}</p>
             <div class="empty-actions">
               <Button variant="primary" size="md" @click="router.push('/catalog')">
-                <span>{{ locale === 'ar' ? 'تصفح كتالوج الأدوية الكامل' : 'Browse Full Catalog' }}</span>
+                <span>{{ t('flashSales.browseCatalogBtn') }}</span>
               </Button>
               <Button variant="outline" size="md" @click="router.push('/')">
-                <span>{{ locale === 'ar' ? 'العودة للصفحة الرئيسية' : 'Return to Home' }}</span>
+                <span>{{ t('common.backToHome') }}</span>
               </Button>
             </div>
           </template>
           <template v-else>
-            <h3>{{ locale === 'ar' ? 'لا توجد عروض مطابقة للفلاتر الحالية' : 'No matching flash deals found' }}</h3>
-            <p>
-              {{
-                locale === 'ar'
-                  ? 'يرجى تجربة كلمات بحث أخرى أو إلغاء فلتر المستودع لعرض كافة العروض المتاحة.'
-                  : 'Try different search keywords or clear warehouse filters to view all active deals.'
-              }}
-            </p>
+            <h3>{{ t('flashSales.emptyFilterTitle') }}</h3>
+            <p>{{ t('flashSales.emptyFilterDesc') }}</p>
             <Button variant="primary" size="md" @click="resetFilters">
-              <span>{{ locale === 'ar' ? 'إعادة ضبط الفلاتر' : 'Reset Filters' }}</span>
+              <span>{{ t('common.resetFilters') }}</span>
             </Button>
           </template>
         </div>

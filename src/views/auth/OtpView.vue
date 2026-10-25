@@ -89,7 +89,7 @@ async function handleVerify() {
 
   const success = await verifyOtp(email.value, fullCode);
   if (success) {
-    router.push('/auth/login');
+    router.push({ path: '/auth/login', query: { email: email.value, verified: '1' } });
   }
 }
 

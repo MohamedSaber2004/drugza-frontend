@@ -138,7 +138,7 @@ function handleSelect(prod: Product) {
           v-model="searchQuery"
           type="text"
           class="search-field"
-          :placeholder="locale === 'ar' ? 'ابحث باسم الدواء، المادة الفعالة، أو الشركة...' : 'Search medicine name, active ingredient, brand...'"
+          :placeholder="t('search.inputPlaceholder')"
           @input="onInput"
           @keydown.esc="emit('close')"
         />
@@ -147,14 +147,14 @@ function handleSelect(prod: Product) {
           v-if="searchQuery"
           type="button"
           class="clear-btn"
-          :title="locale === 'ar' ? 'مسح' : 'Clear'"
+          :title="t('search.clearTooltip')"
           @click="searchQuery = ''; results = []"
         >
           <X :size="18" />
         </button>
 
         <button type="submit" class="search-submit-btn">
-          <span>{{ locale === 'ar' ? 'بحث' : 'Search' }}</span>
+          <span>{{ t('common.search') }}</span>
         </button>
 
         <button type="button" class="close-modal-btn" @click="emit('close')">
@@ -164,7 +164,7 @@ function handleSelect(prod: Product) {
 
       <!-- Quick suggestions pill row -->
       <div class="quick-pills-row">
-        <span class="pills-label">{{ locale === 'ar' ? 'الأكثر بحثاً:' : 'Popular:' }}</span>
+        <span class="pills-label">{{ t('search.popularTitle') }}</span>
         <div class="pills-scroll">
           <button
             v-for="pill in quickSearches"
@@ -191,7 +191,7 @@ function handleSelect(prod: Product) {
           <p>{{ t('search.noResults', { query: searchQuery }) }}</p>
           <span>{{ t('search.tryAnother') }}</span>
           <button type="button" class="empty-action-btn" @click="goToCatalog()">
-            {{ locale === 'ar' ? 'تصفح كافة الأدوية في الكتالوج' : 'Browse all catalog products' }}
+            {{ t('search.browseCatalogLink') }}
           </button>
         </div>
 
@@ -203,10 +203,10 @@ function handleSelect(prod: Product) {
               <SlidersHorizontal :size="18" class="banner-icon" />
               <div>
                 <strong class="banner-title">
-                  {{ locale === 'ar' ? `عرض نتائج "${searchQuery}" في صفحة المنتجات مع الفلاتر` : `View results for "${searchQuery}" in All Products with Filters` }}
+                  {{ t('search.viewResultsFor', { query: searchQuery }) }}
                 </strong>
                 <p class="banner-sub">
-                  {{ locale === 'ar' ? 'فلترة حسب الموزع المعتمد، التصنيف الدوائي، الأسعار، وحالة التوفر بالمخزون.' : 'Filter by verified distributor, category, wholesale pricing, and live inventory.' }}
+                  {{ t('search.filterDesc') }}
                 </p>
               </div>
             </div>
@@ -214,7 +214,7 @@ function handleSelect(prod: Product) {
           </div>
 
           <div class="suggestions-header">
-            <span>{{ locale === 'ar' ? 'مقترحات الأدوية المطابقة' : 'Matching Product Suggestions' }}</span>
+            <span>{{ t('search.matchingSuggestions') }}</span>
           </div>
 
           <!-- Individual Product Suggestions -->
@@ -254,7 +254,7 @@ function handleSelect(prod: Product) {
             <div class="result-price-col">
               <PriceDisplay :price="item.price" size="sm" />
               <span v-if="item.suppliersCount" class="suppliers-avail">
-                {{ item.suppliersCount }} {{ locale === 'ar' ? (item.suppliersCount === 1 ? 'مستودع' : 'مستودعات') : (item.suppliersCount === 1 ? 'warehouse' : 'warehouses') }}
+                {{ item.suppliersCount }} {{ item.suppliersCount === 1 ? t('search.warehouseCountSingle') : t('search.warehouseCountMulti') }}
               </span>
             </div>
 
@@ -270,8 +270,8 @@ function handleSelect(prod: Product) {
                 <SlidersHorizontal :size="20" />
               </div>
               <div class="shortcut-info">
-                <strong>{{ locale === 'ar' ? 'تصفح كل المنتجات مع الفلاتر' : 'All Products with Filters' }}</strong>
-                <p>{{ locale === 'ar' ? 'استعراض أكثر من 26 ألف صنف دوائي مع فلترة الموزعين والتصنيفات' : 'Explore over 26,000 products with provider and category filters' }}</p>
+                <strong>{{ t('search.catalogFiltersTitle') }}</strong>
+                <p>{{ t('search.catalogFiltersDesc') }}</p>
               </div>
               <ArrowRight :size="16" class="shortcut-arrow" :class="{ 'rtl-flip': isRtl }" />
             </div>
@@ -281,8 +281,8 @@ function handleSelect(prod: Product) {
                 <Building2 :size="20" />
               </div>
               <div class="shortcut-info">
-                <strong>{{ locale === 'ar' ? 'موزعو ومستودعات الأدوية المرخصة' : 'Verified Medicine Warehouses' }}</strong>
-                <p>{{ locale === 'ar' ? 'تصفح كبار الموزعين والحد الأدنى للطلبيات وسرعة التوريد' : 'Browse authorized distributors and wholesale delivery terms' }}</p>
+                <strong>{{ t('search.warehousesTitle') }}</strong>
+                <p>{{ t('search.warehousesDesc') }}</p>
               </div>
               <ArrowRight :size="16" class="shortcut-arrow" :class="{ 'rtl-flip': isRtl }" />
             </div>
@@ -292,8 +292,8 @@ function handleSelect(prod: Product) {
                 <Layers :size="20" />
               </div>
               <div class="shortcut-info">
-                <strong>{{ locale === 'ar' ? 'الدليل والتصنيفات الدوائية' : 'Therapeutic Categories' }}</strong>
-                <p>{{ locale === 'ar' ? 'استعراض الأدوية حسب الشكل الصيدلي والتخصص الطبي' : 'Browse medications by dosage form and medical specialty' }}</p>
+                <strong>{{ t('search.categoriesTitle') }}</strong>
+                <p>{{ t('search.categoriesDesc') }}</p>
               </div>
               <ArrowRight :size="16" class="shortcut-arrow" :class="{ 'rtl-flip': isRtl }" />
             </div>

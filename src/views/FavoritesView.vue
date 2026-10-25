@@ -53,7 +53,7 @@ function handleViewProduct(prod: Product) {
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-state-card">
         <Loader2 :size="36" class="spin-icon" />
-        <p>{{ locale === 'ar' ? 'جاري تحميل قائمة الأدوية المفضلة...' : 'Loading your favorite medicines...' }}</p>
+        <p>{{ t('favorites.loadingList') }}</p>
       </div>
 
       <!-- Favorites Grid -->

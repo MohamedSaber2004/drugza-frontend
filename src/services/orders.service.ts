@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { useI18n } from '@/composables/useI18n';
 import {
   type Order,
   type OrderItem,
@@ -57,7 +58,8 @@ export interface BackendOrderGroupDto {
 /**
  * Returns localized status label, badge variant, and canonical status name
  */
-export function getOrderStatusMeta(status: number | OrderStatus | undefined | string, locale = 'ar') {
+export function getOrderStatusMeta(status: number | OrderStatus | undefined | string, customLocale?: string) {
+  const { t } = useI18n();
   let code = 0;
   if (typeof status === 'number') {
     code = status;
@@ -85,84 +87,84 @@ export function getOrderStatusMeta(status: number | OrderStatus | undefined | st
     case OrderStatus.Pending: // 0
       return {
         code,
-        label: locale === 'ar' ? 'قيد الانتظار' : 'Pending',
+        label: t('orders.status.pending'),
         variant: 'warning' as const,
         name: 'Pending'
       };
     case OrderStatus.Approved: // 1
       return {
         code,
-        label: locale === 'ar' ? 'تمت الموافقة' : 'Approved',
+        label: t('orders.status.approved'),
         variant: 'info' as const,
         name: 'Approved'
       };
     case OrderStatus.Rejected: // 2
       return {
         code,
-        label: locale === 'ar' ? 'مرفوض' : 'Rejected',
+        label: t('orders.status.rejected'),
         variant: 'danger' as const,
         name: 'Rejected'
       };
     case OrderStatus.Prepared: // 3
       return {
         code,
-        label: locale === 'ar' ? 'تم التجهيز' : 'Prepared',
+        label: t('orders.status.prepared'),
         variant: 'info' as const,
         name: 'Prepared'
       };
     case OrderStatus.Shipped: // 4
       return {
         code,
-        label: locale === 'ar' ? 'تم الشحن' : 'Shipped',
+        label: t('orders.status.shipped'),
         variant: 'info' as const,
         name: 'Shipped'
       };
     case OrderStatus.Delivered: // 5
       return {
         code,
-        label: locale === 'ar' ? 'تم التوصيل' : 'Delivered',
+        label: t('orders.status.delivered'),
         variant: 'success' as const,
         name: 'Delivered'
       };
     case OrderStatus.Completed: // 6
       return {
         code,
-        label: locale === 'ar' ? 'مكتمل' : 'Completed',
+        label: t('orders.status.completed'),
         variant: 'success' as const,
         name: 'Completed'
       };
     case OrderStatus.ReAssignTo: // 7
       return {
         code,
-        label: locale === 'ar' ? 'إعادة تعيين' : 'Re-assigned',
+        label: t('orders.status.reassigned'),
         variant: 'warning' as const,
         name: 'ReAssignTo'
       };
     case OrderStatus.Refund: // 8
       return {
         code,
-        label: locale === 'ar' ? 'مرتجع (مسترجع)' : 'Refunded',
+        label: t('orders.status.refunded'),
         variant: 'danger' as const,
         name: 'Refund'
       };
     case OrderStatus.Cancel: // 9
       return {
         code,
-        label: locale === 'ar' ? 'ملغي' : 'Cancelled',
+        label: t('orders.status.cancelled'),
         variant: 'neutral' as const,
         name: 'Cancel'
       };
     case OrderStatus.PartiallyRefunded: // 10
       return {
         code,
-        label: locale === 'ar' ? 'مسترجع جزئياً' : 'Partially Refunded',
+        label: t('orders.status.partiallyRefunded'),
         variant: 'warning' as const,
         name: 'PartiallyRefunded'
       };
     default:
       return {
         code,
-        label: locale === 'ar' ? 'قيد الانتظار' : 'Pending',
+        label: t('orders.status.pending'),
         variant: 'neutral' as const,
         name: 'Pending'
       };

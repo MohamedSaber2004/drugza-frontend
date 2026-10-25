@@ -5,7 +5,7 @@ import { useI18n } from '@/composables/useI18n';
 import DrugzaLogo from './DrugzaLogo.vue';
 
 const { isPageLoading, isApiLoading, isGlobalLoading } = useLoading();
-const { locale } = useI18n();
+const { t } = useI18n();
 
 const shouldShow = ref(false);
 let showTimer: any = null;
@@ -37,9 +37,9 @@ watch(isGlobalLoading, (loading) => {
 
 const primaryMessage = computed(() => {
   if (isPageLoading.value) {
-    return locale.value === 'ar' ? 'جاري الانتقال وتحميل الصفحة...' : 'Navigating to destination page...';
+    return t('common.navigating');
   }
-  return locale.value === 'ar' ? 'جاري مزامنة وتجهيز البيانات الدوائية...' : 'Synchronizing pharmaceutical data...';
+  return t('common.syncingData');
 });
 </script>
 
@@ -88,7 +88,7 @@ const primaryMessage = computed(() => {
           <h3 class="loader-primary-text">{{ primaryMessage }}</h3>
           <div class="network-status-badge">
             <span class="pulse-live-dot"></span>
-            <span>{{ locale === 'ar' ? 'منصة دراجزا الدوائية المعتمدة | بث فوري مباشر' : 'Verified Drugza Network | Live Data Stream' }}</span>
+            <span>{{ t('common.liveDataStream') }}</span>
           </div>
         </div>
       </div>

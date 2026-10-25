@@ -8,13 +8,13 @@ export class ProviderRepositoryImpl implements IProviderRepository {
   constructor(private http: IHttpClient) {}
 
   async getProviders(): Promise<Provider[]> {
-    const raw = await this.http.get<any[]>('/api/Providers');
+    const raw = await this.http.get<any>('/api/Providers');
     const list: ProviderApiDto[] = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toProvider);
   }
 
   async getTopProviders(): Promise<Provider[]> {
-    const raw = await this.http.get<any[]>('/api/Providers/top');
+    const raw = await this.http.get<any>('/api/Providers/top');
     const list: ProviderApiDto[] = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toProvider);
   }

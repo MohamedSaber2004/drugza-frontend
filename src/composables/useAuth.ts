@@ -298,81 +298,22 @@ export function useAuth() {
 
   /**
    * 2. Register Endpoint: POST /api/Users/register
-   * Real multipart/form-data call. Direct registration with zero OTP requirement.
-   * Immediately establishes session / logs in and calls save-fcm-token.
+   * Registration does not establish a session: the account must confirm the
+   * emailed OTP and then sign in explicitly to receive a token.
    */
   async function register(formData: FormData): Promise<{ success: boolean; email: string }> {
     isLoading.value = true;
     authError.value = null;
     const email = (formData.get('Email') as string) || '';
-    const password = (formData.get('Password') as string) || '';
 
     try {
       const res = await authService.register(formData);
-      const resData = res.data;
-
-      let registeredUserId = resData?.id || resData?.userId || '';
-      let registeredToken = resData?.token || '';
-
-      // 1. If register endpoint returned token and user info directly
-      if (registeredToken) {
-        const profile: UserProfile = {
-          id: registeredUserId || `usr-${Date.now()}`,
-          businessName: resData?.bussinesName || (formData.get('BussinesName') as string) || 'Pharmacy',
-          fullName: resData?.fullName || (formData.get('FullName') as string) || email.split('@')[0],
-          email: resData?.email || email,
-          phoneNumber: resData?.phoneNumber || (formData.get('PhoneNumber') as string) || '',
-          role: resData?.role || 'Pharmacy',
-          verified: true
-        };
-        setSession(registeredToken, profile);
-        await syncFcmToken(profile.id);
-      } else if (email && password) {
-        // 2. Direct registration with immediate login (no OTP needed)
-        try {
-          const loginRes = await authService.login({
-            usernameOrEmail: email,
-            password: password
-          });
-          const loginData: LoginResponseDto = loginRes.data;
-          if (loginData && loginData.token) {
-            registeredToken = loginData.token;
-            registeredUserId = loginData.id;
-            const profile: UserProfile = {
-              id: loginData.id || `usr-${Date.now()}`,
-              businessName: loginData.bussinesName || (formData.get('BussinesName') as string) || 'Pharmacy',
-              fullName: (formData.get('FullName') as string) || email.split('@')[0],
-              email: loginData.email || email,
-              phoneNumber: loginData.phoneNumber || '',
-              role: loginData.role || 'Pharmacy',
-              verified: true
-            };
-            setSession(loginData.token, profile);
-            await syncFcmToken(profile.id);
-          }
-        } catch (loginErr) {
-          console.warn('Auto-login after register attempt:', loginErr);
-        }
-      }
-
-      if (registeredUserId && !registeredToken) {
-        await syncFcmToken(registeredUserId);
-      }
-
-      if (registeredToken && registeredUserId) {
-        try {
-          const { syncGuestCartToServer } = useCart();
-          syncGuestCartToServer(registeredUserId).catch(e => console.warn('[useAuth] Cart sync failed:', e));
-        } catch (e) {
-          console.warn('[useAuth] Cart sync trigger error:', e);
-        }
-      }
 
       isLoading.value = false;
       const successMsg =
         typeof res.data === 'string' && res.data
           ? res.data
-          : 'Registration completed successfully!';
+          : 'Registration completed. Check your email for the verification code.';
       toast.success(successMsg, 'Registration Successful');
       return { success: true, email };
     } catch (err: any) {
@@ -505,8 +446,9 @@ export function useAuth() {
     return user.value;
   }
 
-  async function updateProfile(updated: Partial<UserProfile>, file?: File | null): Promise<boolean> {
+  async function updateProfile(updated: Partial<UserProfile>): Promise<boolean> {
     if (!user.value) return false;
+
     user.value = {
       ...user.value,
       ...updated
@@ -516,22 +458,29 @@ export function useAuth() {
     if (user.value.id && !user.value.id.startsWith('usr-')) {
       try {
         const fd = new FormData();
-        if (updated.businessName !== undefined) fd.append('BussinesName', updated.businessName.trim());
-        if (updated.fullName !== undefined) fd.append('FullName', updated.fullName.trim());
-        if (updated.phoneNumber !== undefined) fd.append('PhoneNumber', updated.phoneNumber.trim());
-        if (file) fd.append('UploudProfileImage', file);
+        const bName = (updated.businessName !== undefined ? updated.businessName : user.value.businessName)?.trim() || '';
+        const fName = (updated.fullName !== undefined ? updated.fullName : user.value.fullName)?.trim() || '';
+        const phone = (updated.phoneNumber !== undefined ? updated.phoneNumber : user.value.phoneNumber)?.trim() || '';
+
+        if (bName) {
+          fd.append('BussinesName', bName);
+          fd.append('BusinessName', bName);
+        }
+        if (fName) {
+          fd.append('FullName', fName);
+        }
+        if (phone) {
+          fd.append('PhoneNumber', phone);
+        }
 
         await authService.updateUserProfile(user.value.id, fd);
         await fetchUserProfile(user.value.id);
-        toast.success('Pharmacy profile updated successfully!', 'Profile Saved');
         return true;
       } catch (err: any) {
         console.warn('[useAuth] updateUserProfile server sync error:', err);
-        toast.success('Pharmacy profile updated locally.', 'Profile Saved');
         return true;
       }
     } else {
-      toast.success('Pharmacy profile updated successfully!', 'Profile Saved');
       return true;
     }
   }
@@ -565,6 +514,26 @@ export function useAuth() {
     }
   }
 
+  /**
+   * insert-address reads the user from the request body (CreateAddressDto.userId);
+   * a missing id comes back as "User not found". Prefer the stored profile id and
+   * fall back to the JWT claim so stale local profiles still resolve.
+   */
+  function getAuthenticatedUserId(): string | undefined {
+    const isGuid = (v: unknown): v is string =>
+      typeof v === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+    if (isGuid(user.value?.id)) return user.value!.id;
+
+    const payload = token.value ? parseJwt(token.value) : null;
+    const claimId =
+      payload?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+      payload?.nameid ||
+      payload?.sub;
+    return isGuid(claimId) ? claimId : undefined;
+  }
+
   async function addAddress(newAddr: Omit<Address, 'id'>): Promise<Address | null> {
     const areaId = newAddr.areaId || 1;
     const floorNum = newAddr.floor ? parseInt(newAddr.floor) || 1 : 1;
@@ -576,6 +545,7 @@ export function useAuth() {
     try {
       // Real API call: POST /api/Address/insert-address
       await addressService.createAddress({
+        userId: getAuthenticatedUserId(),
         addressLine,
         areaId,
         floorNum,

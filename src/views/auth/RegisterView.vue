@@ -9,12 +9,10 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Upload,
   CheckCircle2,
   ArrowRight,
   Globe,
-  Home,
-  FileCheck
+  Home
 } from 'lucide-vue-next';
 import DrugzaLogo from '@/components/ui/DrugzaLogo.vue';
 import Button from '@/components/ui/Button.vue';
@@ -34,36 +32,18 @@ const confirmPassword = ref('');
 const showPassword = ref(false);
 const agreeTerms = ref(false);
 
-const commercialRegFile = ref<File | null>(null);
-const taxCardFile = ref<File | null>(null);
-const pharmacyLicenseFile = ref<File | null>(null);
-
 const formErrorMessage = ref<string | null>(null);
-
-function handleFileChange(event: Event, type: 'cr' | 'tax' | 'license') {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    const file = target.files[0];
-    if (type === 'cr') commercialRegFile.value = file;
-    if (type === 'tax') taxCardFile.value = file;
-    if (type === 'license') pharmacyLicenseFile.value = file;
-  }
-}
 
 async function handleRegister() {
   formErrorMessage.value = null;
 
   if (password.value !== confirmPassword.value) {
-    formErrorMessage.value = locale.value === 'ar'
-      ? 'كلمتا المرور غير متطابقتين'
-      : 'Passwords do not match';
+    formErrorMessage.value = t('auth.passwordsDoNotMatch');
     return;
   }
 
   if (!agreeTerms.value) {
-    formErrorMessage.value = locale.value === 'ar'
-      ? 'يرجى الموافقة على الشروط والأحكام للمتابعة'
-      : 'Please agree to terms and conditions to proceed';
+    formErrorMessage.value = t('auth.mustAgreeTerms');
     return;
   }
 
@@ -75,19 +55,9 @@ async function handleRegister() {
   formData.append('Password', password.value);
   formData.append('Role', 'Pharmacy');
 
-  if (commercialRegFile.value) {
-    formData.append('CommercialRegistration', commercialRegFile.value);
-  }
-  if (taxCardFile.value) {
-    formData.append('TaxCard', taxCardFile.value);
-  }
-  if (pharmacyLicenseFile.value) {
-    formData.append('PharmacyLicense', pharmacyLicenseFile.value);
-  }
-
   const res = await register(formData);
   if (res.success) {
-    router.push('/');
+    router.push({ path: '/auth/otp', query: { email: res.email } });
   }
 }
 </script>
@@ -98,12 +68,12 @@ async function handleRegister() {
     <div class="auth-top-actions">
       <router-link to="/" class="auth-home-btn">
         <Home :size="16" />
-        <span>{{ locale === 'ar' ? 'العودة للرئيسية' : 'Back to Home' }}</span>
+        <span>{{ t('common.backToHome') }}</span>
       </router-link>
 
       <button type="button" class="auth-lang-btn" @click="toggleLocale">
         <Globe :size="16" />
-        <span>{{ locale === 'ar' ? 'English' : 'اللغة العربية' }}</span>
+        <span>{{ t('topBar.switchLanguage') }}</span>
       </button>
     </div>
 
@@ -111,7 +81,7 @@ async function handleRegister() {
       <!-- Left Branded Showcase Panel -->
       <div class="auth-showcase-panel">
         <div class="showcase-top">
-          <router-link to="/" class="logo-link" :title="locale === 'ar' ? 'العودة للصفحة الرئيسية' : 'Go to Home'">
+          <router-link to="/" class="logo-link" :title="t('common.backToHome')">
             <DrugzaLogo size="md" :inverse="true" :show-tagline="true" />
           </router-link>
         </div>
@@ -158,7 +128,7 @@ async function handleRegister() {
           <!-- Full Name & Pharmacy Name in Two Columns -->
           <div class="form-row">
             <div class="field-group">
-              <label for="reg-fullname" class="field-label">{{ locale === 'ar' ? 'الاسم بالكامل' : 'Full Name' }}</label>
+              <label for="reg-fullname" class="field-label">{{ t('auth.doctorName') }}</label>
               <div class="input-container">
                 <User :size="18" class="input-icon" />
                 <input
@@ -166,7 +136,7 @@ async function handleRegister() {
                   v-model="fullName"
                   type="text"
                   required
-                  :placeholder="locale === 'ar' ? 'د. محمد علي' : 'Dr. Full Name'"
+                  :placeholder="t('auth.fullNamePlaceholder')"
                   class="form-input"
                   autocomplete="name"
                 />
@@ -174,7 +144,7 @@ async function handleRegister() {
             </div>
 
             <div class="field-group">
-              <label for="reg-bizname" class="field-label">{{ locale === 'ar' ? 'اسم الصيدلية أو المنشأة' : 'Pharmacy / Business Name' }}</label>
+              <label for="reg-bizname" class="field-label">{{ t('auth.pharmacyName') }}</label>
               <div class="input-container">
                 <Building :size="18" class="input-icon" />
                 <input
@@ -182,7 +152,7 @@ async function handleRegister() {
                   v-model="businessName"
                   type="text"
                   required
-                  :placeholder="locale === 'ar' ? 'صيدلية الأمل' : 'Hope Dispensary'"
+                  :placeholder="t('auth.pharmacyPlaceholder')"
                   class="form-input"
                 />
               </div>
@@ -192,7 +162,7 @@ async function handleRegister() {
           <!-- Email & Phone Number -->
           <div class="form-row">
             <div class="field-group">
-              <label for="reg-email" class="field-label">{{ locale === 'ar' ? 'البريد الإلكتروني' : 'Email Address' }}</label>
+              <label for="reg-email" class="field-label">{{ t('auth.email') }}</label>
               <div class="input-container">
                 <Mail :size="18" class="input-icon" />
                 <input
@@ -208,7 +178,7 @@ async function handleRegister() {
             </div>
 
             <div class="field-group">
-              <label for="reg-phone" class="field-label">{{ locale === 'ar' ? 'رقم الهاتف' : 'Phone Number' }}</label>
+              <label for="reg-phone" class="field-label">{{ t('auth.phone') }}</label>
               <div class="input-container">
                 <Phone :size="18" class="input-icon" />
                 <input
@@ -252,7 +222,7 @@ async function handleRegister() {
             </div>
 
             <div class="field-group">
-              <label for="reg-confirm-pass" class="field-label">{{ locale === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password' }}</label>
+              <label for="reg-confirm-pass" class="field-label">{{ t('auth.confirmPassword') }}</label>
               <div class="input-container">
                 <Lock :size="18" class="input-icon" />
                 <input
@@ -268,45 +238,18 @@ async function handleRegister() {
             </div>
           </div>
 
-          <!-- Document Upload Badges (Optional/Verification) -->
-          <div class="docs-section">
-            <span class="docs-title">{{ locale === 'ar' ? 'المستندات المهنية (اختياري للتوثيق الفوري):' : 'Verification Documents (Optional):' }}</span>
-            <div class="doc-upload-grid">
-              <label class="file-upload-card" :class="{ 'has-file': Boolean(commercialRegFile) }">
-                <input type="file" accept="image/*,.pdf" class="hidden-input" @change="handleFileChange($event, 'cr')" />
-                <FileCheck v-if="commercialRegFile" :size="20" class="upload-icon-success" />
-                <Upload v-else :size="20" class="upload-icon" />
-                <span class="upload-label">{{ commercialRegFile ? commercialRegFile.name.slice(0, 16) + '...' : (locale === 'ar' ? 'السجل التجاري' : 'Commercial Reg') }}</span>
-              </label>
-
-              <label class="file-upload-card" :class="{ 'has-file': Boolean(taxCardFile) }">
-                <input type="file" accept="image/*,.pdf" class="hidden-input" @change="handleFileChange($event, 'tax')" />
-                <FileCheck v-if="taxCardFile" :size="20" class="upload-icon-success" />
-                <Upload v-else :size="20" class="upload-icon" />
-                <span class="upload-label">{{ taxCardFile ? taxCardFile.name.slice(0, 16) + '...' : (locale === 'ar' ? 'البطاقة الضريبية' : 'Tax Card') }}</span>
-              </label>
-
-              <label class="file-upload-card" :class="{ 'has-file': Boolean(pharmacyLicenseFile) }">
-                <input type="file" accept="image/*,.pdf" class="hidden-input" @change="handleFileChange($event, 'license')" />
-                <FileCheck v-if="pharmacyLicenseFile" :size="20" class="upload-icon-success" />
-                <Upload v-else :size="20" class="upload-icon" />
-                <span class="upload-label">{{ pharmacyLicenseFile ? pharmacyLicenseFile.name.slice(0, 16) + '...' : (locale === 'ar' ? 'ترخيص الصيدلية' : 'Dispensary License') }}</span>
-              </label>
-            </div>
-          </div>
-
           <!-- Terms Agreement -->
           <div class="terms-checkbox">
             <label class="checkbox-label">
               <input v-model="agreeTerms" type="checkbox" required />
               <span>
-                {{ locale === 'ar' ? 'أوافق على ' : 'I agree to the ' }}
+                {{ t('auth.agreeTo') }}
                 <router-link to="/terms" target="_blank" class="legal-link">
-                  {{ locale === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions' }}
+                  {{ t('footer.terms') }}
                 </router-link>
-                {{ locale === 'ar' ? ' و ' : ' and ' }}
+                {{ t('auth.and') }}
                 <router-link to="/privacy" target="_blank" class="legal-link">
-                  {{ locale === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy' }}
+                  {{ t('footer.privacy') }}
                 </router-link>
               </span>
             </label>
@@ -319,6 +262,7 @@ async function handleRegister() {
             block
             type="submit"
             :loading="isLoading"
+            :disabled="!agreeTerms"
             class="submit-btn"
           >
             <span>{{ t('auth.submitRegister') }}</span>
@@ -329,7 +273,7 @@ async function handleRegister() {
         <div class="auth-footer-prompt">
           <span>{{ t('auth.haveAccountPrompt') }}</span>
           <router-link to="/auth/login" class="login-link">
-            {{ locale === 'ar' ? 'تسجيل الدخول' : 'Sign In' }}
+            {{ t('auth.signInLink') }}
           </router-link>
         </div>
       </div>
@@ -573,74 +517,6 @@ async function handleRegister() {
   cursor: pointer;
   background: none;
   border: none;
-}
-
-.docs-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.docs-title {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  font-weight: 600;
-}
-
-.doc-upload-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-@media (max-width: 600px) {
-  .doc-upload-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.file-upload-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 10px 8px;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  background: #FAFCFE;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-}
-
-.file-upload-card:hover {
-  border-color: var(--color-primary-blue);
-  background: #F0F7FB;
-}
-
-.file-upload-card.has-file {
-  border-color: #10B981;
-  background: #ECFDF5;
-}
-
-.hidden-input {
-  display: none;
-}
-
-.upload-icon {
-  color: var(--color-text-tertiary);
-}
-
-.upload-icon-success {
-  color: #10B981;
-}
-
-.upload-label {
-  font-size: 0.6875rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
 }
 
 .terms-checkbox {

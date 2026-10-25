@@ -8,7 +8,7 @@ export class CategoryRepositoryImpl implements ICategoryRepository {
   constructor(private http: IHttpClient) {}
 
   async getCategories(lang = 1): Promise<Category[]> {
-    const raw = await this.http.get<any[]>('/api/Categories', {
+    const raw = await this.http.get<any>('/api/Categories', {
       params: { lang }
     });
     const list: CategoryApiDto[] = Array.isArray(raw) ? raw : (raw?.items || []);

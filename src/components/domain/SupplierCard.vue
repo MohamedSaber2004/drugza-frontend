@@ -32,7 +32,7 @@ const emit = defineEmits<{
 
       <div class="verified-status" title="Verified Medical Distributor">
         <CheckCircle :size="14" class="check-icon" />
-        <span>{{ locale === 'ar' ? 'معتمد' : 'Verified' }}</span>
+        <span>{{ t('common.verified') }}</span>
       </div>
     </div>
 
@@ -55,7 +55,7 @@ const emit = defineEmits<{
       </div>
 
       <div v-if="supplier.orderNum" class="spec-item">
-        <span class="spec-label">{{ locale === 'ar' ? 'الطلبات' : 'Orders' }}</span>
+        <span class="spec-label">{{ t('common.ordersCountLabel') }}</span>
         <strong class="spec-val">{{ supplier.orderNum }}</strong>
       </div>
     </div>

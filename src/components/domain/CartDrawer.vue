@@ -8,10 +8,12 @@ import {
   Plus,
   Minus
 } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCart } from '@/composables/useCart';
 import { useAuth } from '@/composables/useAuth';
 import { useI18n } from '@/composables/useI18n';
+import { productsService } from '@/services/products.service';
 import PriceDisplay from '@/components/ui/PriceDisplay.vue';
 import Button from '@/components/ui/Button.vue';
 import { formatPrice } from '@/utils/price';
@@ -31,8 +33,54 @@ const {
   isCartDrawerOpen,
   updateQuantity,
   removeItem,
+  applyPriceUpdates,
   closeCartDrawer
 } = useCart();
+
+// Savings are derived from the stored list price, which goes stale as suppliers
+// change discounts; re-read live rows whenever the drawer opens.
+async function refreshCartPrices() {
+  const targets = items.value.filter(i => i.productId && i.inventoryId);
+  if (targets.length === 0) return;
+
+  const productIds = [...new Set(targets.map(i => i.productId))];
+  const results = await Promise.all(
+    productIds.map(async productId => {
+      try {
+        return { productId, prices: await productsService.getSupplierPricesForProduct(productId, true) };
+      } catch {
+        return { productId, prices: [] };
+      }
+    })
+  );
+
+  const updates: Array<{
+    productId: string;
+    inventoryId: string;
+    priceId?: string;
+    effectivePrice?: number;
+    originalPrice?: number;
+  }> = [];
+  for (const item of targets) {
+    const live = results.find(r => r.productId === item.productId)?.prices ?? [];
+    const match =
+      live.find(p => p.id === item.priceId) ||
+      live.find(p => p.inventoryUserId === item.inventoryId);
+    if (!match) continue;
+    updates.push({
+      productId: item.productId,
+      inventoryId: item.inventoryId,
+      priceId: match.id,
+      effectivePrice: match.effectiveSalesPrice,
+      originalPrice: match.salesPrice
+    });
+  }
+  applyPriceUpdates(updates);
+}
+
+watch(isCartDrawerOpen, open => {
+  if (open) void refreshCartPrices();
+});
 
 function onQuantityInput(itemId: string, event: Event) {
   const target = event.target as HTMLInputElement;
@@ -64,7 +112,7 @@ function goToCheckout() {
           <div>
             <h3 class="cart-title">{{ t('cart.title') }}</h3>
             <span class="items-count">
-              {{ totalItemsCount }} {{ locale === 'ar' ? 'أصناف مختلفة' : 'distinct products' }} ({{ totalPiecesCount }} {{ locale === 'ar' ? 'قطعة كتوتال' : 'pieces total' }})
+              {{ totalItemsCount }} {{ t('common.distinctItems') }} ({{ totalPiecesCount }} {{ t('common.pieces') }})
             </span>
           </div>
         </div>
@@ -127,11 +175,11 @@ function goToCheckout() {
                     {{ locale === 'ar' && item.product.arabicName ? item.product.arabicName : item.product.name }}
                   </h5>
                   <span class="item-form">
-                    {{ item.product.form || 'صنف دوائي' }} &bull; {{ item.product.packSize || 'عبوة' }}
+                    {{ item.product.form || t('common.pharmaceutical') }} &bull; {{ item.product.packSize || t('common.unitPiece') }}
                   </span>
                   <div class="item-pricing">
                     <PriceDisplay :price="item.effectivePrice" size="sm" />
-                    <span class="unit-text">/ {{ locale === 'ar' ? 'قطعة' : 'piece' }}</span>
+                    <span class="unit-text">/ {{ t('common.unitPiece') }}</span>
                   </div>
                 </div>
 
@@ -142,7 +190,7 @@ function goToCheckout() {
                       type="button"
                       class="step-btn"
                       @click="updateQuantity(item.id, item.quantity - 1)"
-                      :title="locale === 'ar' ? 'إنقاص قطعة واحدة' : 'Decrease 1 piece'"
+                      :title="t('cart.decreasePiece')"
                     >
                       <Minus :size="12" />
                     </button>
@@ -152,13 +200,13 @@ function goToCheckout() {
                       :value="item.quantity"
                       class="step-input"
                       @change="onQuantityInput(item.id, $event)"
-                      :title="locale === 'ar' ? 'عدد القطع' : 'Quantity in pieces'"
+                      :title="t('cart.quantityInPieces')"
                     />
                     <button
                       type="button"
                       class="step-btn"
                       @click="updateQuantity(item.id, item.quantity + 1)"
-                      :title="locale === 'ar' ? 'زيادة قطعة واحدة' : 'Increase 1 piece'"
+                      :title="t('cart.increasePiece')"
                     >
                       <Plus :size="12" />
                     </button>
@@ -172,7 +220,7 @@ function goToCheckout() {
                   type="button"
                   class="del-btn"
                   @click="removeItem(item.id)"
-                  :aria-label="locale === 'ar' ? 'حذف الصنف' : 'Remove item'"
+                  :aria-label="t('cart.removeItemAria')"
                 >
                   <Trash2 :size="16" />
                 </button>
@@ -182,8 +230,8 @@ function goToCheckout() {
             <!-- Supplier Group Subtotal Bar -->
             <div class="group-subtotal">
               <span class="sub-label">
-                {{ locale === 'ar' ? `إجمالي أصناف (${group.inventoryName}):` : `Total from (${group.inventoryName}):` }}
-                ({{ group.items.length }} {{ locale === 'ar' ? 'أصناف مختلفة' : 'distinct items' }} &bull; {{ group.totalPiecesCount }} {{ locale === 'ar' ? 'قطعة' : 'pieces' }})
+                {{ t('cart.totalFromWarehouse', { name: group.inventoryName }) }}
+                ({{ group.items.length }} {{ t('common.distinctItems') }} &bull; {{ group.totalPiecesCount }} {{ t('common.pieces') }})
               </span>
               <strong class="sub-amount">{{ formatPrice(group.subtotal) }} {{ t('common.currency') }}</strong>
             </div>
@@ -195,24 +243,27 @@ function goToCheckout() {
       <div v-if="items.length > 0" class="cart-footer">
         <div class="summary-breakdown">
           <div class="sum-row">
-            <span>{{ locale === 'ar' ? 'عدد الأصناف المختلفة' : 'Distinct Items' }}</span>
-            <strong>{{ totalItemsCount }} {{ locale === 'ar' ? 'أصناف' : 'items' }}</strong>
+            <span>{{ t('common.distinctItemsCount') }}</span>
+            <strong>{{ totalItemsCount }} {{ t('common.items') }}</strong>
           </div>
           <div class="sum-row">
-            <span>{{ locale === 'ar' ? 'إجمالي عدد القطع' : 'Total Pieces' }}</span>
-            <strong>{{ totalPiecesCount }} {{ locale === 'ar' ? 'قطعة' : 'pieces' }}</strong>
+            <span>{{ t('common.totalPieces') }}</span>
+            <strong>{{ totalPiecesCount }} {{ t('common.pieces') }}</strong>
           </div>
           <div class="sum-row">
             <span>{{ t('cart.subtotal') }}</span>
             <strong>{{ formatPrice(totalCartAmount) }} {{ t('common.currency') }}</strong>
           </div>
           <div class="sum-row savings" v-if="totalSavings > 0">
-            <span>{{ locale === 'ar' ? 'خصومات تجارية' : 'Commercial Discounts' }}</span>
-            <strong class="green-text">- {{ formatPrice(totalSavings) }} {{ t('common.currency') }}</strong>
+            <span>
+              {{ t('cart.commercialDiscounts') }}
+              <span class="included-hint">{{ t('cart.discountsIncluded') }}</span>
+            </span>
+            <strong class="green-text">{{ formatPrice(totalSavings) }} {{ t('common.currency') }}</strong>
           </div>
           <div class="sum-row">
             <span>{{ t('cart.coldChainFee') }}</span>
-            <span class="shipping-tag">{{ locale === 'ar' ? 'تحدد عند إتمام الطلب' : 'Calculated at Checkout' }}</span>
+            <span class="shipping-tag">{{ t('cart.calculatedAtCheckout') }}</span>
           </div>
           <div class="sum-row total-row">
             <span>{{ t('cart.total') }}</span>
@@ -639,6 +690,14 @@ function goToCheckout() {
 
 .green-text {
   color: var(--color-success) !important;
+}
+
+.included-hint {
+  display: inline-block;
+  margin-inline-start: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-muted);
 }
 
 .shipping-tag {

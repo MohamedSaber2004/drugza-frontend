@@ -16,14 +16,12 @@ import {
   Tag,
   CheckCircle2,
   ShoppingBag,
-  Flame,
-  Award
+  Flame
 } from 'lucide-vue-next';
 import type { Product, Category, Supplier } from '@/types';
 import {
   homeService,
   type HomeBanner,
-  type HomeBrand,
   type HomeSpecialOffer
 } from '@/services/home.service';
 import Button from '@/components/ui/Button.vue';
@@ -51,7 +49,6 @@ const suppliers = ref<Supplier[] | null>(null);
 const products = ref<Product[] | null>(null);
 const flashSales = ref<Product[] | null>(null);
 const banners = ref<HomeBanner[] | null>(null);
-const brands = ref<HomeBrand[] | null>(null);
 const specialOffersOne = ref<HomeSpecialOffer[] | null>(null);
 const specialOffersTwo = ref<HomeSpecialOffer[] | null>(null);
 const customBusinessName = ref<string | null>(null);
@@ -153,9 +150,7 @@ const maxDiscountRate = computed(() => {
 
 const promoHeadline = computed(() => {
   if (maxDiscountRate.value > 0) {
-    return locale.value === 'ar'
-      ? `خصومات تصل إلى ${maxDiscountRate.value}% على الأدوية والمستلزمات الحيوية`
-      : `Up to ${maxDiscountRate.value}% OFF on Vital Prescriptions & Supplements`;
+    return t('home.maxDiscountsBanner', { rate: maxDiscountRate.value });
   }
   return '';
 });
@@ -169,7 +164,6 @@ onMounted(async () => {
     categories.value = data.categories;
     products.value = data.products;
     suppliers.value = data.providers;
-    brands.value = data.brands;
     specialOffersOne.value = data.specialOffersone;
     specialOffersTwo.value = data.specialOfferstwo;
     flashSales.value = data.flashSales;
@@ -180,7 +174,6 @@ onMounted(async () => {
     categories.value = null;
     products.value = null;
     suppliers.value = null;
-    brands.value = null;
     specialOffersOne.value = null;
     specialOffersTwo.value = null;
     flashSales.value = null;
@@ -232,7 +225,7 @@ function handleViewAlternatives(ingredientId: string) {
           <!-- Trust Pill / Personalized Welcome -->
           <div class="hero-badge">
             <span class="pulse-icon"></span>
-            <span v-if="businessName">{{ locale === 'ar' ? `مرحباً بك: ${businessName}` : `Welcome: ${businessName}` }}</span>
+            <span v-if="businessName">{{ t('home.welcomeUser', { name: businessName }) }}</span>
             <span v-else>{{ t('hero.badge') }}</span>
           </div>
 
@@ -351,7 +344,7 @@ function handleViewAlternatives(ingredientId: string) {
             type="button"
             class="slider-nav-btn prev-btn"
             @click.stop="isRtl ? nextBanner() : prevBanner()"
-            :aria-label="locale === 'ar' ? 'السابق' : 'Previous banner'"
+            :aria-label="t('home.prevBanner')"
           >
             <component :is="isRtl ? ChevronRight : ChevronLeft" :size="20" />
           </button>
@@ -361,7 +354,7 @@ function handleViewAlternatives(ingredientId: string) {
             type="button"
             class="slider-nav-btn next-btn"
             @click.stop="isRtl ? prevBanner() : nextBanner()"
-            :aria-label="locale === 'ar' ? 'التالي' : 'Next banner'"
+            :aria-label="t('home.nextBanner')"
           >
             <component :is="isRtl ? ChevronLeft : ChevronRight" :size="20" />
           </button>
@@ -385,10 +378,10 @@ function handleViewAlternatives(ingredientId: string) {
           v-else
           variant="banner"
           :icon="Sparkles"
-          :title="locale === 'ar' ? 'العروض الترويجية الحصرية' : 'Exclusive Promotional Campaigns'"
-          :badge="locale === 'ar' ? 'عروض قادمة' : 'Coming Soon'"
-          :subtitle="locale === 'ar' ? 'لا توجد بنرات ترويجية نشطة حالياً. ترقبوا أحدث الخصومات قريباً!' : 'No promotional banners currently active. Check back soon for exclusive deals!'"
-          action-text="تصفح الكتالوج"
+          :title="t('home.promoPlaceholderTitle')"
+          :badge="t('home.promoPlaceholderBadge')"
+          :subtitle="t('home.promoPlaceholderSubtitle')"
+          :action-text="t('home.promoPlaceholderAction')"
           action-route="/catalog"
         />
       </div>
@@ -461,10 +454,10 @@ function handleViewAlternatives(ingredientId: string) {
         <SectionPlaceholder
           v-else
           :icon="Flame"
-          :title="locale === 'ar' ? 'عروض الفلاش سيل الأسبوعية' : 'Flash Sale Deals'"
-          :badge="locale === 'ar' ? 'عروض فلاش سيل' : 'Flash Sale'"
-          :subtitle="locale === 'ar' ? 'لا توجد عروض تخفيض فوري نشطة في الوقت الحالي. انتظروا عروضنا الاستثنائية القادمة قريباً!' : 'No active flash sales right now. Limited-time discounts will be announced shortly!'"
-          action-text="تصفح جميع المنتجات"
+          :title="t('home.flashSalePlaceholderTitle')"
+          :badge="t('home.flashSalePlaceholderBadge')"
+          :subtitle="t('home.flashSalePlaceholderSubtitle')"
+          :action-text="t('home.flashSalePlaceholderAction')"
           action-route="/catalog"
           min-height="220px"
         />
@@ -502,9 +495,9 @@ function handleViewAlternatives(ingredientId: string) {
         <SectionPlaceholder
           v-else
           :icon="Building2"
-          :title="locale === 'ar' ? 'الموزعون المعتمدون' : 'Authorized Distributors'"
-          :subtitle="locale === 'ar' ? 'لا يوجد موزعون متاحون حالياً في هذا القسم' : 'No distributors available at the moment'"
-          action-text="عرض كافة الموزعين"
+          :title="t('providers.title')"
+          :subtitle="t('providers.subtitle')"
+          :action-text="t('home.providersPlaceholderAction')"
           action-route="/providers"
           min-height="220px"
         />
@@ -591,9 +584,9 @@ function handleViewAlternatives(ingredientId: string) {
         <SectionPlaceholder
           v-else
           :icon="Layers"
-          :title="locale === 'ar' ? 'التصنيفات الدوائية' : 'Medicine Categories'"
-          :subtitle="locale === 'ar' ? 'لا توجد تصنيفات متاحة حالياً' : 'No categories available at the moment'"
-          action-text="عرض كافة التصنيفات"
+          :title="t('categories.title')"
+          :subtitle="t('categories.subtitle')"
+          :action-text="t('home.categoriesPlaceholderAction')"
           action-route="/categories"
           min-height="220px"
         />
@@ -632,9 +625,9 @@ function handleViewAlternatives(ingredientId: string) {
         <SectionPlaceholder
           v-else
           :icon="ShoppingBag"
-          :title="locale === 'ar' ? 'المنتجات الدوائية المميزة' : 'Featured Pharmaceutical Products'"
-          :subtitle="locale === 'ar' ? 'لا توجد منتجات متوفرة حالياً في هذا القسم' : 'No products available at the moment'"
-          action-text="استعراض الكتالوج"
+          :title="t('home.featuredProductsTitle')"
+          :subtitle="t('home.featuredProductsSub')"
+          :action-text="t('home.browseCatalog')"
           action-route="/catalog"
           min-height="240px"
         />
@@ -655,15 +648,15 @@ function handleViewAlternatives(ingredientId: string) {
         >
           <div class="promo-content">
             <Badge variant="warning" size="md">
-              {{ locale === 'ar' ? 'عرض إضافي' : 'Exclusive Partner Offer' }}
+              {{ t('home.exclusivePartnerOffer') }}
             </Badge>
 
             <h2 class="promo-heading">
-              {{ locale === 'ar' ? 'خصومات وعروض شركاء دراجزا' : 'Drugza Partner Offers & Discounts' }}
+              {{ t('home.partnerOffersTitle') }}
             </h2>
 
             <p class="promo-desc">
-              {{ locale === 'ar' ? 'عروض حصرية مقدمة من كبرى شركات التوزيع الدوائي والمستحضرات الطبية.' : 'Exclusive offers from verified pharmaceutical distributors and medical suppliers.' }}
+              {{ t('home.partnerOffersDesc') }}
             </p>
 
             <Button
@@ -672,7 +665,7 @@ function handleViewAlternatives(ingredientId: string) {
               class="promo-cta-btn"
               @click.stop="handleBannerClick(specialOffersTwo[0])"
             >
-              <span>{{ locale === 'ar' ? 'تصفح العروض' : 'Explore Offers' }}</span>
+              <span>{{ t('home.exploreOffers') }}</span>
               <ArrowRight :size="18" class="arrow-icon" />
             </Button>
           </div>
@@ -692,77 +685,11 @@ function handleViewAlternatives(ingredientId: string) {
           v-else
           variant="banner"
           :icon="Sparkles"
-          :title="locale === 'ar' ? 'عروض الشركاء المميزة' : 'Partner Special Offers'"
-          :badge="locale === 'ar' ? 'قسم الشركاء' : 'Partners'"
-          :subtitle="locale === 'ar' ? 'لا توجد عروض شركاء إضافية حالياً، سيتم إشعاركم فور توفرها.' : 'No secondary special offers active right now. Check back soon!'"
-          action-text="تصفح جميع المنتجات"
+          :title="t('home.partnerSpecialOffers')"
+          :badge="t('home.partnersBadge')"
+          :subtitle="t('home.noPartnerOffersSub')"
+          :action-text="t('home.browseAllProducts')"
           action-route="/catalog"
-        />
-      </div>
-    </section>
-
-    <!-- =========================================================================
-         8. BRANDS / PHARMACY PARTNERS SECTION
-         ========================================================================= -->
-    <section class="drugza-section brands-section">
-      <div class="drugza-container">
-        <div class="section-header-row">
-          <div>
-            <span class="sub-heading">{{ locale === 'ar' ? 'الشركاء والعلامات التجارية' : 'Brands & Partners' }}</span>
-            <h2 class="section-title">{{ locale === 'ar' ? 'كبرى الصيدليات والكيانات المعتمدة' : 'Trusted Pharmacy Brands' }}</h2>
-            <p class="section-desc">
-              {{ locale === 'ar' ? 'نخبة من كبرى الكيانات والصيدليات الرائدة المشاركة على منصة دراجزا' : 'Top verified pharmacy brands collaborating on Drugza marketplace' }}
-            </p>
-          </div>
-          <router-link to="/catalog" class="view-all-link">
-            <span>{{ locale === 'ar' ? 'عرض الكتالوج' : 'View Catalog' }}</span>
-            <ArrowRight :size="16" class="arrow-icon" />
-          </router-link>
-        </div>
-
-        <SkeletonGrid v-if="isLoading" variant="brand" :count="6" />
-
-        <div v-else-if="brands && brands.length > 0" class="brands-grid" v-reveal.children>
-          <div
-            v-for="brand in brands"
-            :key="brand.id"
-            class="brand-card"
-            @click="router.push(`/catalog?search=${encodeURIComponent(brand.name)}`)"
-          >
-            <div class="brand-logo-wrap">
-              <img
-                :src="brand.imagePath"
-                :alt="brand.name"
-                class="brand-logo"
-                loading="lazy"
-                @error="onImageError($event, 'category')"
-              />
-            </div>
-            <div class="brand-info">
-              <h4 class="brand-name">
-                {{ locale === 'ar' && brand.arabicName ? brand.arabicName : brand.name }}
-              </h4>
-              <p
-                v-if="locale === 'ar' && brand.arabicName && brand.arabicName !== brand.name"
-                class="brand-en-name"
-              >
-                {{ brand.name }}
-              </p>
-              <span v-if="brand.isPopular" class="popular-tag">
-                ⭐ {{ locale === 'ar' ? 'شائع' : 'Popular' }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <SectionPlaceholder
-          v-else
-          :icon="Award"
-          :title="locale === 'ar' ? 'العلامات التجارية والشركاء' : 'Brands & Partners'"
-          :subtitle="locale === 'ar' ? 'لا توجد علامات تجارية مدرجة حالياً' : 'No brand partners listed currently'"
-          action-text="تصفح الكتالوج"
-          action-route="/catalog"
-          min-height="200px"
         />
       </div>
     </section>
@@ -1781,101 +1708,5 @@ function handleViewAlternatives(ingredientId: string) {
 
 .promo-card-secondary {
   background: linear-gradient(135deg, #07192C 0%, #0B2B4D 50%, #0F3A66 100%);
-}
-
-.brands-section {
-  background-color: #F8FAFC;
-  padding: var(--space-3xl) 0;
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.brands-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-md);
-  margin-top: var(--space-md);
-}
-
-@media (max-width: 480px) {
-  .brands-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.brand-card {
-  background: #FFFFFF;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-md) var(--space-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  cursor: pointer;
-  transition: all var(--dur-base) var(--ease-smooth);
-  box-shadow: var(--shadow-xs);
-}
-
-.brand-card:hover {
-  border-color: var(--color-primary-teal);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.brand-logo-wrap {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-lg);
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 6px;
-  overflow: hidden;
-}
-
-.brand-logo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.brand-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.brand-name {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--color-deep-blue);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.brand-en-name {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.popular-tag {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #D97706;
-  background: #FEF3C7;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  width: fit-content;
 }
 </style>

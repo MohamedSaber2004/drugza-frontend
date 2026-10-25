@@ -8,13 +8,13 @@ export class BannerRepositoryImpl implements IBannerRepository {
   constructor(private http: IHttpClient) {}
 
   async getBanners(): Promise<Banner[]> {
-    const raw = await this.http.get<any[]>('/api/Banners');
+    const raw = await this.http.get<any>('/api/Banners');
     const list: BannerApiDto[] = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toBanner);
   }
 
   async getSpecialOffers(): Promise<Banner[]> {
-    const raw = await this.http.get<any[]>('/api/Banners/special-offers');
+    const raw = await this.http.get<any>('/api/Banners/special-offers');
     const list: BannerApiDto[] = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toBanner);
   }

@@ -221,7 +221,7 @@ function resetFilters() {
             <input
               v-model="searchQuery"
               type="text"
-              :placeholder="locale === 'ar' ? `البحث في أدوية ${provider.arabicName || provider.businessName}...` : `Search medicines in ${provider.businessName}...`"
+              :placeholder="t('providerDetail.searchInProvider', { name: locale === 'ar' ? (provider.arabicName || provider.businessName) : provider.businessName })"
               class="search-field"
             />
           </div>
@@ -290,7 +290,7 @@ function resetFilters() {
           v-model="currentPage"
           :total-items="filteredProducts.length"
           :page-size="pageSize"
-          :item-label="locale === 'ar' ? 'منتج' : 'products'"
+          :item-label="t('common.items')"
         />
 
         <div v-else class="empty-state">

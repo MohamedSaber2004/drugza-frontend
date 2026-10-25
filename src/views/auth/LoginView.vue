@@ -12,9 +12,10 @@ const route = useRoute();
 const { t, locale, toggleLocale } = useI18n();
 const { login, isLoading, authError } = useAuth();
 
-const emailOrPhone = ref('');
+const emailOrPhone = ref((route.query.email as string) || '');
 const password = ref('');
 const showPassword = ref(false);
+const justVerified = route.query.verified === '1';
 
 async function handleLogin() {
   const success = await login(emailOrPhone.value, password.value, true);
@@ -31,12 +32,12 @@ async function handleLogin() {
     <div class="auth-top-actions">
       <router-link to="/" class="auth-home-btn">
         <Home :size="16" />
-        <span>{{ locale === 'ar' ? 'العودة للرئيسية' : 'Back to Home' }}</span>
+        <span>{{ t('common.backToHome') }}</span>
       </router-link>
 
       <button type="button" class="auth-lang-btn" @click="toggleLocale">
         <Globe :size="16" />
-        <span>{{ locale === 'ar' ? 'English' : 'اللغة العربية' }}</span>
+        <span>{{ t('topBar.switchLanguage') }}</span>
       </button>
     </div>
 
@@ -44,7 +45,7 @@ async function handleLogin() {
       <!-- Left Branded Showcase Panel (Matching UI Board Screen 2) -->
       <div class="auth-showcase-panel">
         <div class="showcase-top">
-          <router-link to="/" class="logo-link" :title="locale === 'ar' ? 'العودة للصفحة الرئيسية' : 'Go to Home'">
+          <router-link to="/" class="logo-link" :title="t('common.backToHome')">
             <DrugzaLogo size="md" :inverse="true" :show-tagline="true" />
           </router-link>
         </div>
@@ -81,6 +82,11 @@ async function handleLogin() {
         <div class="form-header">
           <h2 class="form-title">{{ t('auth.loginTitle') }}</h2>
           <p class="form-subtitle">{{ t('auth.loginSubtitle') }}</p>
+        </div>
+
+        <div v-if="justVerified" class="auth-success-banner" role="status">
+          <CheckCircle2 :size="16" />
+          <span>{{ t('auth.emailVerified') }}</span>
         </div>
 
         <div v-if="authError" class="auth-error-banner" role="alert">
@@ -364,6 +370,19 @@ async function handleLogin() {
   background: var(--color-error-bg);
   color: var(--color-error);
   border: 1px solid rgba(220, 91, 97, 0.3);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  margin-bottom: var(--space-md);
+}
+
+.auth-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.3);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;

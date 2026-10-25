@@ -453,7 +453,7 @@ async function handleSaveAddress() {
     let finalAreaId: number | undefined = undefined;
 
     if (selectedAreaId.value === 'custom') {
-      areaName = customAreaName.value.trim() || (locale.value === 'ar' ? 'المنطقة المركزية' : 'Central District');
+      areaName = customAreaName.value.trim() || t('addresses.centralDistrict');
       finalAreaId = 1;
     } else {
       const areaObj = availableAreas.value.find(a => a.id === selectedAreaId.value);
@@ -461,7 +461,7 @@ async function handleSaveAddress() {
         areaName = getAreaDisplayName(areaObj);
         finalAreaId = typeof areaObj.id === 'number' ? areaObj.id : 1;
       } else {
-        areaName = locale.value === 'ar' ? 'المنطقة المركزية' : 'Central District';
+        areaName = t('addresses.centralDistrict');
         finalAreaId = 1;
       }
     }
@@ -531,7 +531,7 @@ async function handleConfirmDelete() {
       <!-- Header Row -->
       <div class="page-header-row">
         <div class="header-text-col">
-          <span class="eyebrow">{{ locale === 'ar' ? 'النقاط اللوجستية ومواقع الاستلام' : 'Logistics & Receiving Points' }}</span>
+          <span class="eyebrow">{{ t('addresses.logisticsEyebrow') }}</span>
           <h1 class="page-title">{{ t('addresses.title') }}</h1>
           <p class="page-subtitle">
             {{ t('addresses.subtitle') }}
@@ -595,13 +595,13 @@ async function handleConfirmDelete() {
             </div>
 
             <div v-if="addr.buildingNumber || addr.floor || addr.apartment" class="addr-sub-line">
-              <span v-if="addr.buildingNumber">{{ locale === 'ar' ? 'المبنى:' : 'Building:' }} <strong>{{ addr.buildingNumber }}</strong></span>
-              <span v-if="addr.floor">{{ locale === 'ar' ? 'الدور:' : 'Floor:' }} <strong>{{ addr.floor }}</strong></span>
-              <span v-if="addr.apartment">{{ locale === 'ar' ? 'شقة / وحدة:' : 'Apt / Unit:' }} <strong>{{ addr.apartment }}</strong></span>
+              <span v-if="addr.buildingNumber">{{ t('addresses.buildingLabel') }} <strong>{{ addr.buildingNumber }}</strong></span>
+              <span v-if="addr.floor">{{ t('addresses.floorLabel') }} <strong>{{ addr.floor }}</strong></span>
+              <span v-if="addr.apartment">{{ t('addresses.aptLabel') }} <strong>{{ addr.apartment }}</strong></span>
             </div>
 
             <div v-if="addr.landmark && !addr.landmark.toLowerCase().startsWith('apt')" class="landmark-row">
-              <span class="landmark-k">{{ locale === 'ar' ? 'علامة مميزة:' : 'Landmark:' }}</span>
+              <span class="landmark-k">{{ t('addresses.landmarkLabel') }}</span>
               <span class="landmark-v">{{ addr.landmark }}</span>
             </div>
 
@@ -660,8 +660,8 @@ async function handleConfirmDelete() {
       <!-- Empty State -->
       <div v-else class="empty-address-card">
         <MapPin :size="48" class="empty-ico" />
-        <h2>{{ locale === 'ar' ? 'لا توجد فروع مسجلة حالياً' : 'No Delivery Branches Configured' }}</h2>
-        <p>{{ locale === 'ar' ? 'أضف عنوان صيدليتك ومواقع الاستلام لتمكين الشحن المباشر والمحدد بنظام التبريد الدوائي.' : 'Register your community dispensary address to enable fast, GPS-routed pharmaceutical drops.' }}</p>
+        <h2>{{ t('addresses.emptyTitle') }}</h2>
+        <p>{{ t('addresses.emptyDesc') }}</p>
         <Button variant="primary" size="md" @click="handleOpenAddModal">
           <Plus :size="16" />
           <span>{{ t('addresses.addBtn') }}</span>
@@ -676,9 +676,9 @@ async function handleConfirmDelete() {
         <div class="modal-header">
           <div>
             <h3 class="modal-title">{{ modalMode === 'edit' ? t('addresses.editTitle') : t('addresses.addNewTitle') }}</h3>
-            <p class="modal-sub">{{ locale === 'ar' ? 'أدخل بيانات عنوان صيدليتك ومواقع الاستلام بدقة' : 'Specify branch address and delivery location details' }}</p>
+            <p class="modal-sub">{{ t('addresses.modalSub') }}</p>
           </div>
-          <button class="modal-close-btn" @click="isModalOpen = false" :aria-label="locale === 'ar' ? 'إغلاق' : 'Close'">
+          <button class="modal-close-btn" @click="isModalOpen = false" :aria-label="t('common.close')">
             <X :size="20" />
           </button>
         </div>
@@ -690,7 +690,7 @@ async function handleConfirmDelete() {
               <input
                 v-model="newTitle"
                 type="text"
-                :placeholder="locale === 'ar' ? 'مثال: الفرع الرئيسي، منفذ الدقي، المستودع' : 'e.g. Main Branch, Dokki Dispensary, Warehouse'"
+                :placeholder="t('addresses.branchNamePlaceholder')"
                 class="modal-input"
                 required
               />
@@ -701,12 +701,12 @@ async function handleConfirmDelete() {
             <!-- Governorate (المحافظة) Dropdown -->
             <div class="form-group">
               <div class="label-with-count">
-                <label>{{ locale === 'ar' ? 'المحافظة *' : 'Governorate *' }}</label>
+                <label>{{ t('addresses.govLabel') }}</label>
                 <span v-if="isLoadingCities" class="loading-hint">
-                  {{ locale === 'ar' ? 'جاري التحميل...' : 'Loading...' }}
+                  {{ t('common.loading') }}
                 </span>
                 <span v-else class="count-hint">
-                  ({{ availableCities.length }} {{ locale === 'ar' ? 'محافظة' : 'cities' }})
+                  ({{ t('addresses.govCount', { count: availableCities.length }) }})
                 </span>
               </div>
               <div class="select-wrapper">
@@ -731,12 +731,12 @@ async function handleConfirmDelete() {
             <!-- Area / District (المنطقة / الحي) Dropdown -->
             <div class="form-group">
               <div class="label-with-count">
-                <label>{{ locale === 'ar' ? 'المنطقة / الحي *' : 'District / Area *' }}</label>
+                <label>{{ t('addresses.districtLabel') }}</label>
                 <span v-if="isLoadingAreas" class="loading-hint">
-                  {{ locale === 'ar' ? 'جاري التحميل...' : 'Loading...' }}
+                  {{ t('common.loading') }}
                 </span>
                 <span v-else-if="availableAreas.length > 0" class="count-hint">
-                  ({{ availableAreas.length }} {{ locale === 'ar' ? 'منطقة' : 'areas' }})
+                  ({{ t('addresses.districtCount', { count: availableAreas.length }) }})
                 </span>
               </div>
               <div class="select-wrapper">
@@ -747,7 +747,7 @@ async function handleConfirmDelete() {
                   required
                 >
                   <option :value="null" disabled>
-                    {{ locale === 'ar' ? '-- اختر المنطقة أو الحي --' : '-- Select Area / District --' }}
+                    {{ t('addresses.selectDistrictDefault') }}
                   </option>
                   <option
                     v-for="area in availableAreas"
@@ -757,7 +757,7 @@ async function handleConfirmDelete() {
                     {{ getAreaDisplayName(area) }}
                   </option>
                   <option value="custom">
-                    {{ locale === 'ar' ? '✍️ حي آخر (كتابة يدوية)...' : '✍️ Other (Custom Area)...' }}
+                    {{ t('addresses.otherDistrictOption') }}
                   </option>
                 </select>
                 <ChevronDown :size="16" class="select-caret" />
@@ -768,12 +768,12 @@ async function handleConfirmDelete() {
           <!-- Custom Area Text Input (shown only if 'custom' is selected) -->
           <div v-if="selectedAreaId === 'custom'" class="form-row">
             <div class="form-group full-width">
-              <label>{{ locale === 'ar' ? 'اسم المنطقة أو الحي يدوياً *' : 'Custom District / Area Name *' }}</label>
+              <label>{{ t('addresses.customDistrictLabel') }}</label>
               <input
                 v-model="customAreaName"
                 type="text"
                 class="modal-input"
-                :placeholder="locale === 'ar' ? 'أدخل اسم الحي أو الميدان بدقة...' : 'Enter district or area name...'"
+                :placeholder="t('addresses.customDistrictPlaceholder')"
                 required
               />
             </div>
@@ -785,7 +785,7 @@ async function handleConfirmDelete() {
               <input
                 v-model="newStreet"
                 type="text"
-                :placeholder="locale === 'ar' ? 'اسم الشارع الرئيسي أو المتفرع' : 'Street name, avenue, or boulevard'"
+                :placeholder="t('addresses.streetPlaceholder')"
                 class="modal-input"
                 required
               />
@@ -794,20 +794,20 @@ async function handleConfirmDelete() {
 
           <div class="form-row four-cols">
             <div class="form-group">
-              <label>{{ locale === 'ar' ? 'رقم المبنى' : 'Building No.' }}</label>
+              <label>{{ t('addresses.buildingNoLabel') }}</label>
               <input v-model="newBuilding" type="text" placeholder="15B" class="modal-input" />
             </div>
             <div class="form-group">
-              <label>{{ locale === 'ar' ? 'الدور' : 'Floor' }}</label>
-              <input v-model="newFloor" type="text" :placeholder="locale === 'ar' ? 'الأرضي / 2' : 'Ground / 2'" class="modal-input" />
+              <label>{{ t('addresses.floorInputLabel') }}</label>
+              <input v-model="newFloor" type="text" :placeholder="t('addresses.floorPlaceholder')" class="modal-input" />
             </div>
             <div class="form-group">
-              <label>{{ locale === 'ar' ? 'رقم الشقة / الوحدة' : 'Apt / Unit' }}</label>
+              <label>{{ t('addresses.aptInputLabel') }}</label>
               <input v-model="newApartment" type="text" placeholder="3" class="modal-input" />
             </div>
             <div class="form-group">
-              <label>{{ locale === 'ar' ? 'علامة مميزة (اختياري)' : 'Landmark (Optional)' }}</label>
-              <input v-model="newLandmark" type="text" :placeholder="locale === 'ar' ? 'بجوار بنك مصر' : 'Opposite Bank'" class="modal-input" />
+              <label>{{ t('addresses.landmarkOptional') }}</label>
+              <input v-model="newLandmark" type="text" :placeholder="t('addresses.landmarkPlaceholder')" class="modal-input" />
             </div>
           </div>
 
@@ -822,7 +822,7 @@ async function handleConfirmDelete() {
                   <div>
                     <h4 class="gps-heading">{{ t('addresses.coordinatesLabel') }}</h4>
                     <p class="gps-subheading">
-                      {{ locale === 'ar' ? 'حدد الموقع الجغرافي الدقيق للفرع عبر الـ GPS لتوجيه مندوبي الشحن عبر الخرائط مباشرة.' : 'Detect exact dispensary GPS coordinates for one-click courier navigation.' }}
+                      {{ t('addresses.gpsNotice') }}
                     </p>
                   </div>
                 </div>
@@ -876,7 +876,7 @@ async function handleConfirmDelete() {
           <div class="form-row checkbox-row">
             <label class="check-label">
               <input v-model="newIsDefault" type="checkbox" class="modal-checkbox" />
-              <span>{{ locale === 'ar' ? 'تعيين هذا الموقع كعنوان استلام رئيسي للصيدلية' : 'Set this location as default receiving branch' }}</span>
+              <span>{{ t('addresses.setDefaultPrompt') }}</span>
             </label>
           </div>
 
@@ -898,9 +898,9 @@ async function handleConfirmDelete() {
         <div class="delete-icon-circle">
           <Trash2 :size="28" />
         </div>
-        <h3 class="modal-title text-center">{{ t('addresses.deleteConfirm') }}</h3>
+        <h3 class="modal-title text-center">{{ t('addresses.deleteTitle') }}</h3>
         <p class="modal-sub text-center">
-          {{ locale === 'ar' ? `هل أنت متأكد من حذف فرع "${addressToDelete?.title || addressToDelete?.streetAddress}"؟` : `Are you sure you want to remove "${addressToDelete?.title || addressToDelete?.streetAddress}"?` }}
+          {{ t('addresses.deleteConfirm', { name: addressToDelete?.title || addressToDelete?.streetAddress }) }}
           <br>
           <span class="warning-text">{{ t('addresses.deleteWarning') }}</span>
         </p>

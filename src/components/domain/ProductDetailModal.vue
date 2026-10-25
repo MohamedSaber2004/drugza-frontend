@@ -44,7 +44,7 @@ const bestPrice = computed(() => {
 
 const fallbackProviderName = computed(() =>
   currentProduct.value?.inventoryName?.trim()
-    || (locale.value === 'ar' ? 'مستودع أدوية معتمد' : 'Authorized Provider')
+    || t('common.authorizedProvider')
 );
 
 watch(
@@ -138,7 +138,7 @@ function addDirectProduct() {
       <!-- Header -->
       <div class="modal-header">
         <div class="title-wrap">
-          <span class="category-pill">{{ (locale === 'ar' ? currentProduct.categoryArabicName : currentProduct.categoryName) || currentProduct.categoryName || (locale === 'ar' ? 'مستحضر دوائي' : 'Pharmaceutical') }}</span>
+          <span class="category-pill">{{ (locale === 'ar' ? currentProduct.categoryArabicName : currentProduct.categoryName) || currentProduct.categoryName || t('common.pharmaceutical') }}</span>
           <h2 class="modal-title">{{ locale === 'ar' && currentProduct.arabicName ? currentProduct.arabicName : currentProduct.name }}</h2>
           <span v-if="locale === 'ar' && currentProduct.arabicName && currentProduct.arabicName !== currentProduct.name" class="modal-ar-title">{{ currentProduct.name }}</span>
           <span v-else-if="locale === 'en' && currentProduct.arabicName && currentProduct.arabicName !== currentProduct.name" class="modal-ar-title">{{ currentProduct.arabicName }}</span>
@@ -147,7 +147,7 @@ function addDirectProduct() {
           <router-link
             :to="'/products/' + encryptId(currentProduct.id)"
             class="full-page-btn"
-            :title="locale === 'ar' ? 'فتح صفحة المستحضر الكاملة' : 'Open full product page'"
+            :title="t('productDetail.openFullPage')"
             @click="emit('close')"
           >
             <ExternalLink :size="18" />
@@ -156,7 +156,7 @@ function addDirectProduct() {
             type="button"
             class="fav-btn-modal"
             :class="{ 'is-active': isFavorite(currentProduct.id) }"
-            :title="isFavorite(currentProduct.id) ? (locale === 'ar' ? 'إزالة من المفضلة' : 'Remove from favorites') : (locale === 'ar' ? 'إضافة إلى المفضلة' : 'Add to favorites')"
+            :title="isFavorite(currentProduct.id) ? t('favorites.removeTooltip') : t('favorites.addTooltip')"
             @click.stop="toggleFavorite(currentProduct.id, locale === 'ar' ? (currentProduct.arabicName || currentProduct.name) : currentProduct.name, currentProduct.productPriceId)"
           >
             <Heart
@@ -248,7 +248,7 @@ function addDirectProduct() {
           :class="{ 'is-active': activeTab === 'alternatives' }"
           @click="activeTab = 'alternatives'"
         >
-          {{ locale === 'ar' ? 'البدائل المتطابقة' : 'Alternatives' }} ({{ alternatives.length }})
+          {{ t('productDetail.substitutesCount', { count: alternatives.length }) }}
         </button>
       </div>
 
@@ -347,7 +347,7 @@ function addDirectProduct() {
               <!-- Loading state while supplier prices are fetched -->
               <tr v-if="isLoadingPrices">
                 <td colspan="7" class="suppliers-loading">
-                  {{ locale === 'ar' ? 'جارٍ تحميل بيانات الموردين…' : 'Loading supplier prices…' }}
+                  {{ t('common.loadingSuppliers') }}
                 </td>
               </tr>
 
@@ -358,7 +358,7 @@ function addDirectProduct() {
                     <span class="sup-name">{{ fallbackProviderName }}</span>
                     <span class="delivery-badge">
                       <Truck :size="12" />
-                      {{ locale === 'ar' ? 'توصيل مبرد سريع' : 'Express Delivery' }}
+                      {{ t('common.expressDelivery') }}
                     </span>
                   </div>
                 </td>
@@ -482,7 +482,7 @@ function addDirectProduct() {
 
           <!-- Loading state while supplier prices are fetched -->
           <div v-if="isLoadingPrices" class="mobile-supplier-card suppliers-loading-card">
-            {{ locale === 'ar' ? 'جارٍ تحميل بيانات الموردين…' : 'Loading supplier prices…' }}
+            {{ t('common.loadingSuppliers') }}
           </div>
 
           <!-- Fallback mobile card if supplierPrices is empty -->
@@ -492,7 +492,7 @@ function addDirectProduct() {
                 <strong class="mob-sup-name">{{ fallbackProviderName }}</strong>
                 <span class="delivery-badge">
                   <Truck :size="12" />
-                  {{ locale === 'ar' ? 'توصيل مبرد سريع' : 'Express Delivery' }}
+                  {{ t('common.expressDelivery') }}
                 </span>
               </div>
               <span v-if="currentProduct.discountRate" class="discount-badge-pill">
@@ -574,7 +574,7 @@ function addDirectProduct() {
         </div>
         <div v-else class="empty-alternatives">
           <Layers :size="32" class="empty-icon" />
-          <p>{{ locale === 'ar' ? 'لا توجد بدائل تجارية أخرى مسجلة حالياً لهذه المادة الفعالة.' : 'No other generic substitutes currently cataloged for this formulation.' }}</p>
+          <p>{{ t('productDetail.noSubstitutes') }}</p>
         </div>
       </div>
     </div>

@@ -156,6 +156,7 @@ export function setupDependencyInjection(container: DIContainer = defaultContain
   container.registerTransient(TOKENS.GetUserOrdersUseCase, (c) => new GetUserOrdersUseCase(c.resolve(TOKENS.OrderRepository)));
   container.registerTransient(TOKENS.GetOrderDetailUseCase, (c) => new GetOrderDetailUseCase(c.resolve(TOKENS.OrderRepository)));
   container.registerTransient(TOKENS.CancelOrderUseCase, (c) => new CancelOrderUseCase(c.resolve(TOKENS.OrderRepository)));
+  container.registerTransient(TOKENS.GetReturnsUseCase, (c) => new GetReturnsUseCase(c.resolve(TOKENS.OrderRepository)));
 
   // 8. Addresses Use Cases
   container.registerTransient(TOKENS.GetAddressesUseCase, (c) => new GetAddressesUseCase(c.resolve(TOKENS.AddressRepository)));

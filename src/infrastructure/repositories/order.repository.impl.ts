@@ -18,7 +18,7 @@ export class OrderRepositoryImpl implements IOrderRepository {
   }
 
   async getOrders(): Promise<Order[]> {
-    const raw = await this.http.get<any[]>('/api/Orders');
+    const raw = await this.http.get<any>('/api/Orders');
     const list: OrderApiDto[] = Array.isArray(raw) ? raw : (raw?.items || []);
     return list.map(EntityMapper.toOrder);
   }

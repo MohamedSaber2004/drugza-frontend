@@ -169,7 +169,7 @@ function handleSelectSupplier(supplier: Supplier) {
                 <strong class="spec-v">{{ sup.deliverySpeed }}</strong>
               </div>
               <div v-if="sup.rating" class="spec-cell rating">
-                <span class="spec-k">{{ locale === 'ar' ? 'التقييم' : 'Rating' }}</span>
+                <span class="spec-k">{{ t('common.rating') }}</span>
                 <div class="stars-val">
                   <Star :size="13" fill="#F3CE79" stroke="#F3CE79" />
                   <strong>{{ sup.rating }}</strong>

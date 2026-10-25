@@ -6,15 +6,11 @@ import {
   CheckCircle2,
   Clock,
   FileText,
-  Download,
   AlertCircle,
-  ExternalLink,
-  ChevronRight,
   ChevronDown,
   RotateCcw,
   XCircle,
-  Search,
-  SlidersHorizontal
+  Search
 } from 'lucide-vue-next';
 import Button from '@/components/ui/Button.vue';
 import Badge from '@/components/ui/Badge.vue';
@@ -31,7 +27,6 @@ const router = useRouter();
 const toast = useToast();
 const { t, locale } = useI18n();
 
-const activeTab = ref<'history' | 'invoices'>('history');
 const orders = ref<Order[]>([]);
 const isLoading = ref(true);
 const currentPage = ref(1);
@@ -162,15 +157,11 @@ async function downloadInvoice(invId: string) {
   try {
     await invoicesService.generateInvoice(rawNum);
     toast.success(
-      locale.value === 'ar'
-        ? `تم طلب وتوليد الفاتورة الضريبية للطلبية #${rawNum}.`
-        : `Tax invoice requested for order #${rawNum}.`
+      t('orders.taxInvoiceRequested', { num: rawNum })
     );
   } catch {
     toast.info(
-      locale.value === 'ar'
-        ? `الفاتورة الضريبية للطلبية #${rawNum} قيد الإصدار والمعالجة.`
-        : `Tax invoice for order #${rawNum} is being prepared.`
+      t('orders.taxInvoiceProcessing', { num: rawNum })
     );
   }
 }
@@ -185,28 +176,10 @@ async function downloadInvoice(invId: string) {
           <h1 class="orders-title">{{ t('ordersPage.heading') }}</h1>
           <p class="orders-sub">{{ t('ordersPage.subtitle') }}</p>
         </div>
-
-        <!-- Navigation Tabs -->
-        <div class="orders-nav-tabs">
-          <button
-            class="tab-btn"
-            :class="{ 'is-active': activeTab === 'history' }"
-            @click="activeTab = 'history'"
-          >
-            {{ locale === 'ar' ? 'سجل الطلبيات' : 'Order History' }}
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ 'is-active': activeTab === 'invoices' }"
-            @click="activeTab = 'invoices'"
-          >
-            {{ locale === 'ar' ? 'الفواتير الضريبية' : 'Tax Invoices' }}
-          </button>
-        </div>
       </div>
 
-      <!-- Tab 1: Order History -->
-      <div v-if="activeTab === 'history'" class="history-view">
+      <!-- Order History -->
+      <div class="history-view">
         <!-- Order History Filter Controls -->
         <div class="history-filter-card">
           <!-- Status Filter Tabs / Pills -->
@@ -218,7 +191,7 @@ async function downloadInvoice(invId: string) {
               @click="selectedStatusFilter = 'all'"
             >
               <Package :size="15" />
-              <span>{{ locale === 'ar' ? 'جميع الطلبات' : 'All Orders' }}</span>
+              <span>{{ t('orders.allTab') }}</span>
               <span class="count-tag">{{ statusCounts.all }}</span>
             </button>
 
@@ -229,7 +202,7 @@ async function downloadInvoice(invId: string) {
               @click="selectedStatusFilter = 'in_progress'"
             >
               <Clock :size="15" />
-              <span>{{ locale === 'ar' ? 'قيد التنفيذ' : 'In-Progress' }}</span>
+              <span>{{ t('orders.inProgressTab') }}</span>
               <span class="count-tag" v-if="statusCounts.in_progress > 0">{{ statusCounts.in_progress }}</span>
             </button>
 
@@ -240,7 +213,7 @@ async function downloadInvoice(invId: string) {
               @click="selectedStatusFilter = 'completed'"
             >
               <CheckCircle2 :size="15" />
-              <span>{{ locale === 'ar' ? 'المكتملة' : 'Completed' }}</span>
+              <span>{{ t('orders.completedTab') }}</span>
               <span class="count-tag" v-if="statusCounts.completed > 0">{{ statusCounts.completed }}</span>
             </button>
 
@@ -251,7 +224,7 @@ async function downloadInvoice(invId: string) {
               @click="selectedStatusFilter = 'refunded'"
             >
               <RotateCcw :size="15" />
-              <span>{{ locale === 'ar' ? 'المرتجعة' : 'Returned' }}</span>
+              <span>{{ t('orders.returnedTab') }}</span>
               <span class="count-tag" v-if="statusCounts.refunded > 0">{{ statusCounts.refunded }}</span>
             </button>
 
@@ -262,7 +235,7 @@ async function downloadInvoice(invId: string) {
               @click="selectedStatusFilter = 'cancelled'"
             >
               <XCircle :size="15" />
-              <span>{{ locale === 'ar' ? 'الملغية والمرفوضة' : 'Cancelled / Rejected' }}</span>
+              <span>{{ t('orders.cancelledTab') }}</span>
               <span class="count-tag" v-if="statusCounts.cancelled > 0">{{ statusCounts.cancelled }}</span>
             </button>
           </div>
@@ -274,7 +247,7 @@ async function downloadInvoice(invId: string) {
               v-model="historySearchQuery"
               type="text"
               class="history-search-input"
-              :placeholder="locale === 'ar' ? 'بحث برقم الطلبية، المستودع، أو الصنف...' : 'Search by order #, warehouse, or item...'"
+              :placeholder="t('orders.searchOrdersPlaceholder')"
             />
             <button
               v-if="historySearchQuery"
@@ -293,13 +266,13 @@ async function downloadInvoice(invId: string) {
           <table class="data-table">
             <thead>
               <tr>
-                <th>{{ locale === 'ar' ? 'رقم الطلبية' : 'Order #' }}</th>
-                <th>{{ locale === 'ar' ? 'تاريخ الطلبية' : 'Order Date' }}</th>
-                <th>{{ locale === 'ar' ? 'مستودع الموزع' : 'Supplier Warehouse' }}</th>
-                <th>{{ locale === 'ar' ? 'عدد الأصناف' : 'Items Count' }}</th>
-                <th>{{ locale === 'ar' ? 'الإجمالي' : 'Total Amount' }}</th>
-                <th>{{ locale === 'ar' ? 'حالة الشحن' : 'Delivery Status' }}</th>
-                <th>{{ locale === 'ar' ? 'إجراء' : 'Actions' }}</th>
+                <th>{{ t('orders.thOrderNum') }}</th>
+                <th>{{ t('orders.thDate') }}</th>
+                <th>{{ t('orders.thWarehouse') }}</th>
+                <th>{{ t('orders.thItemsCount') }}</th>
+                <th>{{ t('orders.thTotal') }}</th>
+                <th>{{ t('orders.thStatus') }}</th>
+                <th>{{ t('orders.thActions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -324,8 +297,8 @@ async function downloadInvoice(invId: string) {
                     <Package :size="30" class="empty-icon" />
                     <p class="empty-text">
                       {{ historySearchQuery
-                          ? (locale === 'ar' ? 'لا توجد طلبات تطابق كلمة البحث.' : 'No orders match your search query.')
-                          : (locale === 'ar' ? 'لا توجد طلبات في هذا القسم حالياً.' : 'No orders found in this section.') }}
+                          ? t('orders.noSearchMatches')
+                          : t('orders.emptySection') }}
                     </p>
                     <Button
                       v-if="selectedStatusFilter !== 'all' || historySearchQuery"
@@ -333,7 +306,7 @@ async function downloadInvoice(invId: string) {
                       size="sm"
                       @click="selectedStatusFilter = 'all'; historySearchQuery = ''"
                     >
-                      {{ locale === 'ar' ? 'عرض جميع الطلبات' : 'Show All Orders' }}
+                      {{ t('orders.showAll') }}
                     </Button>
                   </div>
                 </td>
@@ -345,7 +318,7 @@ async function downloadInvoice(invId: string) {
                   </td>
                   <td>{{ new Date(ord.createdAt).toLocaleDateString() }}</td>
                   <td>{{ ord.supplierName }}</td>
-                  <td>{{ ord.items.reduce((s, i) => s + i.quantity, 0) }} {{ locale === 'ar' ? 'وحدة' : 'units' }}</td>
+                  <td>{{ ord.items.reduce((s, i) => s + i.quantity, 0) }} {{ t('orders.units') }}</td>
                   <td>
                     <PriceDisplay :price="ord.total" size="sm" />
                   </td>
@@ -375,7 +348,7 @@ async function downloadInvoice(invId: string) {
                         @click="downloadInvoice('INV-' + ord.id)"
                       >
                         <FileText :size="13" />
-                        <span>{{ locale === 'ar' ? 'فاتورة' : 'Invoice' }}</span>
+                        <span>{{ t('orders.invoice') }}</span>
                       </Button>
                     </div>
                   </td>
@@ -398,11 +371,11 @@ async function downloadInvoice(invId: string) {
                         <table class="sub-items-table">
                           <thead>
                             <tr>
-                              <th>{{ locale === 'ar' ? 'اسم الدواء / الصنف' : 'Medicine / Product' }}</th>
-                              <th>{{ locale === 'ar' ? 'المستودع' : 'Warehouse' }}</th>
-                              <th>{{ locale === 'ar' ? 'الكمية' : 'Quantity' }}</th>
-                              <th>{{ locale === 'ar' ? 'سعر الوحدة' : 'Unit Price' }}</th>
-                              <th>{{ locale === 'ar' ? 'الإجمالي' : 'Total' }}</th>
+                              <th>{{ t('orders.thProduct') }}</th>
+                              <th>{{ t('orders.thWarehouse') }}</th>
+                              <th>{{ t('orders.thQuantity') }}</th>
+                              <th>{{ t('orders.thUnitPrice') }}</th>
+                              <th>{{ t('orders.thTotal') }}</th>
                               <th>{{ t('ordersPage.itemStatus') }}</th>
                             </tr>
                           </thead>
@@ -415,8 +388,8 @@ async function downloadInvoice(invId: string) {
                                 <span class="sub-item-wh">{{ item.inventoryName || ord.supplierName }}</span>
                               </td>
                               <td>{{ item.quantity }}</td>
-                              <td>{{ item.unitPrice ? item.unitPrice.toFixed(2) + ' ج.م' : '-' }}</td>
-                              <td><strong>{{ (item.totalPrice || item.quantity * item.unitPrice).toFixed(2) }} ج.م</strong></td>
+                              <td>{{ item.unitPrice ? item.unitPrice.toFixed(2) + ' ' + t('common.currency') : '-' }}</td>
+                              <td><strong>{{ (item.totalPrice || item.quantity * item.unitPrice).toFixed(2) }} {{ t('common.currency') }}</strong></td>
                               <td>
                                 <Badge :variant="getOrderStatusMeta(item.statusCode ?? item.status, locale).variant">
                                   {{ getOrderStatusMeta(item.statusCode ?? item.status, locale).label }}
@@ -458,8 +431,8 @@ async function downloadInvoice(invId: string) {
             <Package :size="28" class="empty-icon" />
             <p class="empty-text">
               {{ historySearchQuery
-                  ? (locale === 'ar' ? 'لا توجد طلبات تطابق كلمة البحث.' : 'No orders match your search query.')
-                  : (locale === 'ar' ? 'لا توجد طلبات في هذا القسم حالياً.' : 'No orders found in this section.') }}
+                  ? t('orders.noSearchMatches')
+                  : t('orders.emptySection') }}
             </p>
             <Button
               v-if="selectedStatusFilter !== 'all' || historySearchQuery"
@@ -467,7 +440,7 @@ async function downloadInvoice(invId: string) {
               size="sm"
               @click="selectedStatusFilter = 'all'; historySearchQuery = ''"
             >
-              {{ locale === 'ar' ? 'عرض جميع الطلبات' : 'Show All Orders' }}
+              {{ t('orders.showAll') }}
             </Button>
           </div>
           <div
@@ -486,21 +459,21 @@ async function downloadInvoice(invId: string) {
             </div>
             <div class="mob-card-body">
               <div class="mob-row">
-                <span class="mob-label">{{ locale === 'ar' ? 'المستودع:' : 'Warehouse:' }}</span>
+                <span class="mob-label">{{ t('orders.warehouseLabel') }}</span>
                 <span class="mob-val">{{ ord.supplierName }}</span>
               </div>
               <div class="mob-row">
-                <span class="mob-label">{{ locale === 'ar' ? 'تاريخ الطلبية:' : 'Date:' }}</span>
+                <span class="mob-label">{{ t('orders.dateLabel') }}</span>
                 <span class="mob-val">{{ new Date(ord.createdAt).toLocaleDateString() }}</span>
               </div>
               <div class="mob-row">
-                <span class="mob-label">{{ locale === 'ar' ? 'الأصناف:' : 'Items:' }}</span>
+                <span class="mob-label">{{ t('orders.itemsLabel') }}</span>
                 <button
                   type="button"
                   class="mob-toggle-items-btn"
                   @click="toggleOrderItems(ord.id)"
                 >
-                  <span>{{ ord.items.reduce((s, i) => s + i.quantity, 0) }} {{ locale === 'ar' ? 'وحدة' : 'units' }}</span>
+                  <span>{{ ord.items.reduce((s, i) => s + i.quantity, 0) }} {{ t('orders.units') }}</span>
                   <span class="mob-items-hint">({{ expandedOrderIds.has(ord.id) ? t('ordersPage.hideItems') : t('ordersPage.viewItems') }})</span>
                 </button>
               </div>
@@ -516,7 +489,7 @@ async function downloadInvoice(invId: string) {
                   </div>
                   <div class="mob-sub-item-bottom">
                     <span class="mob-item-wh">{{ item.inventoryName || ord.supplierName }}</span>
-                    <span class="mob-item-math">{{ item.quantity }} × {{ item.unitPrice ? item.unitPrice.toFixed(2) : '-' }} ج.م</span>
+                    <span class="mob-item-math">{{ item.quantity }} × {{ item.unitPrice ? item.unitPrice.toFixed(2) : '-' }} {{ t('common.currency') }}</span>
                   </div>
                 </div>
               </div>
@@ -529,7 +502,7 @@ async function downloadInvoice(invId: string) {
                 @click="downloadInvoice('INV-' + ord.id)"
               >
                 <FileText :size="14" />
-                <span>{{ locale === 'ar' ? 'الفاتورة الضريبية' : 'Tax Invoice' }}</span>
+                <span>{{ t('orders.taxInvoice') }}</span>
               </Button>
             </div>
           </div>
@@ -539,89 +512,6 @@ async function downloadInvoice(invId: string) {
           v-if="filteredOrders.length > pageSize"
           v-model="currentPage"
           :total-items="filteredOrders.length"
-          :page-size="pageSize"
-        />
-      </div>
-
-      <!-- Tab 3: Invoices -->
-      <div v-else class="invoices-view">
-        <!-- Desktop/Laptop Table View (>= 768px) -->
-        <div class="table-card desktop-only-table">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ locale === 'ar' ? 'رقم الفاتورة' : 'Invoice #' }}</th>
-                <th>{{ locale === 'ar' ? 'رقم الطلبية' : 'Order #' }}</th>
-                <th>{{ locale === 'ar' ? 'تاريخ الإصدار' : 'Issue Date' }}</th>
-                <th>{{ locale === 'ar' ? 'المبلغ الإجمالي' : 'Total Amount' }}</th>
-                <th>{{ locale === 'ar' ? 'حالة السداد' : 'Payment Status' }}</th>
-                <th>{{ locale === 'ar' ? 'تحميل' : 'Download' }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="orders.length === 0">
-                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--color-text-secondary);">
-                  {{ locale === 'ar' ? 'لا توجد فواتير صادرة حالياً.' : 'No invoices generated yet.' }}
-                </td>
-              </tr>
-              <tr v-for="ord in paginatedOrders" :key="'inv-' + ord.id">
-                <td><strong>INV-{{ ord.id }}</strong></td>
-                <td>{{ ord.orderNumber }}</td>
-                <td>{{ new Date(ord.createdAt).toLocaleDateString() }}</td>
-                <td><PriceDisplay :price="ord.total" size="sm" /></td>
-                <td><Badge variant="success">{{ locale === 'ar' ? 'مدفوعة' : 'Paid' }}</Badge></td>
-                <td>
-                  <Button variant="ghost" size="sm" @click="downloadInvoice('INV-' + ord.id)">
-                    <Download :size="15" />
-                    <span>PDF</span>
-                  </Button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Mobile Invoices Cards (< 768px) -->
-        <div class="mobile-invoices-list mobile-only-cards">
-          <div v-if="orders.length === 0" class="empty-mobile-card">
-            {{ locale === 'ar' ? 'لا توجد فواتير صادرة حالياً.' : 'No invoices generated yet.' }}
-          </div>
-          <div
-            v-for="ord in paginatedOrders"
-            :key="'mob-inv-' + ord.id"
-            class="mobile-invoice-card"
-          >
-            <div class="mob-card-head">
-              <div class="mob-order-num">
-                <FileText :size="16" class="mob-ico" />
-                <strong>INV-{{ ord.id }}</strong>
-              </div>
-              <Badge variant="success">{{ locale === 'ar' ? 'مدفوعة' : 'Paid' }}</Badge>
-            </div>
-            <div class="mob-card-body">
-              <div class="mob-row">
-                <span class="mob-label">{{ locale === 'ar' ? 'رقم الطلبية:' : 'Order #:' }}</span>
-                <span class="mob-val">{{ ord.orderNumber }}</span>
-              </div>
-              <div class="mob-row">
-                <span class="mob-label">{{ locale === 'ar' ? 'تاريخ الإصدار:' : 'Issue Date:' }}</span>
-                <span class="mob-val">{{ new Date(ord.createdAt).toLocaleDateString() }}</span>
-              </div>
-            </div>
-            <div class="mob-card-foot">
-              <PriceDisplay :price="ord.total" size="md" />
-              <Button variant="outline" size="sm" @click="downloadInvoice('INV-' + ord.id)">
-                <Download :size="15" />
-                <span>PDF</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <Pagination
-          v-if="orders.length > pageSize"
-          v-model="currentPage"
-          :total-items="orders.length"
           :page-size="pageSize"
         />
       </div>

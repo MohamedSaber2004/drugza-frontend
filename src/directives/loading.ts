@@ -1,4 +1,5 @@
 import type { Directive } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
 type LoadingBindingValue = boolean | { loading: boolean; text?: string; blur?: number | false };
 
@@ -47,8 +48,8 @@ function updateLoading(el: LoadingElement, value: LoadingBindingValue) {
       el.style.position = 'relative';
     }
 
-    const isRtl = document.documentElement.dir === 'rtl' || document.documentElement.lang === 'ar';
-    const text = customText ?? (isRtl ? 'جاري التحميل...' : 'Loading...');
+    const { t } = useI18n();
+    const text = customText ?? t('common.loading');
 
     el.classList.add('drugza-blur-active');
     el.style.setProperty('--drugza-loading-blur', blur === false ? '0px' : `${blur ?? 2}px`);

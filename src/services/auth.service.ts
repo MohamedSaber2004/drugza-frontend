@@ -63,11 +63,7 @@ export const authService = {
    * POST /api/Users/register
    */
   async register(formData: FormData) {
-    return apiClient.post('/api/Users/register', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    return apiClient.post('/api/Users/register', formData);
   },
 
   /**
@@ -167,11 +163,7 @@ export const authService = {
    * PUT /api/Users/{id}
    */
   async updateUserProfile(userId: string, formData: FormData) {
-    return apiClient.put(`/api/Users/${userId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    return apiClient.put(`/api/Users/${userId}`, formData);
   }
 };
 

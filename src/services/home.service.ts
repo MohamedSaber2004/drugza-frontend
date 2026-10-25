@@ -1,7 +1,6 @@
 import { apiClient, getImageUrl } from './client';
 import type { Product, Category, Supplier } from '@/types';
 import { productsService } from './products.service';
-import { brandsService } from './brands.service';
 import { getProviderProductCount, getCategoryProductCount } from '@/data/catalogStats';
 import { cachedRequest } from '@/utils/cache';
 
@@ -117,18 +116,16 @@ export const homeService = {
     return cachedRequest(
       'home_composite_data',
       async () => {
-        const [homeRes, productsRes, brandsRes, flashRes] = await Promise.allSettled([
+        const [homeRes, productsRes, flashRes] = await Promise.allSettled([
           apiClient.get<Pick<BackendHomeDataResponse, 'banners' | 'categories' | 'providers'>>('/api/Home/GetHome', {
             headers: { 'X-Silent-Loading': 'true' }
           }),
           productsService.getProductsPage({ page: 1, size: 10 }),
-          brandsService.getPopularBrands(),
           productsService.getFlashSaleProducts()
         ]);
 
         const home = homeRes.status === 'fulfilled' ? homeRes.value.data : null;
         const products = productsRes.status === 'fulfilled' ? productsRes.value.items : [];
-        const brands = brandsRes.status === 'fulfilled' ? brandsRes.value : [];
         const flashSales = flashRes.status === 'fulfilled' ? flashRes.value : [];
 
         return {
@@ -149,16 +146,7 @@ export const homeService = {
               ? home.providers.map(mapBackendProviderToSupplier)
               : null,
 
-          brands:
-            brands.length > 0
-              ? brands.map((b) => ({
-                  id: b.id,
-                  name: b.name,
-                  arabicName: b.arName,
-                  imagePath: getImageUrl(b.imagePath, 'banner'),
-                  isPopular: b.isPopular ?? false
-                }))
-              : null,
+          brands: null,
 
           specialOffersone: null,
           specialOfferstwo: null,
