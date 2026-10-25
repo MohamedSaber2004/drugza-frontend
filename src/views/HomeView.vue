@@ -24,6 +24,7 @@ import {
   type HomeBanner,
   type HomeSpecialOffer
 } from '@/services/home.service';
+import { categoriesService } from '@/services/categories.service';
 import Button from '@/components/ui/Button.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Skeleton from '@/components/ui/Skeleton.vue';
@@ -158,28 +159,36 @@ const promoHeadline = computed(() => {
 // Single unified onMounted loading all public home sections
 onMounted(async () => {
   isLoading.value = true;
-  try {
-    const data = await homeService.getHome();
+  const [homeRes, catsRes] = await Promise.allSettled([
+    homeService.getHome(),
+    categoriesService.getCategories()
+  ]);
+
+  if (homeRes.status === 'fulfilled') {
+    const data = homeRes.value;
     banners.value = data.banners;
-    categories.value = data.categories;
+    // The home payload can list deleted category ids, so prefer the canonical list.
+    categories.value =
+      catsRes.status === 'fulfilled' && catsRes.value.length > 0
+        ? catsRes.value
+        : data.categories;
     products.value = data.products;
     suppliers.value = data.providers;
     specialOffersOne.value = data.specialOffersone;
     specialOffersTwo.value = data.specialOfferstwo;
     flashSales.value = data.flashSales;
     customBusinessName.value = data.businessName || null;
-  } catch (err) {
-    console.warn('Error loading home data:', err);
+  } else {
+    console.warn('Error loading home data:', homeRes.reason);
     banners.value = null;
-    categories.value = null;
+    categories.value = catsRes.status === 'fulfilled' && catsRes.value.length > 0 ? catsRes.value : null;
     products.value = null;
     suppliers.value = null;
     specialOffersOne.value = null;
     specialOffersTwo.value = null;
     flashSales.value = null;
-  } finally {
-    isLoading.value = false;
   }
+  isLoading.value = false;
 });
 
 function handleViewProduct(prod: Product) {
